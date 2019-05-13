@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block body %}
+    <div id="selectTab">
+        <select name="" id="selectSTL">
+            <option value="0">--Please choose a STL model--</option>
+        </select>
+    </div>
+    <p></p>
+    <div id="renderOutput">
+    </div>
+    <br>
+    <div id='parent_div'>
+        <div id="controlPanel">
+        </div>
+        <div id="flaskServerResponse"></div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="../static/js/dropDownOut.js"></script>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="../static/css/style.css">
+{% endblock %}
