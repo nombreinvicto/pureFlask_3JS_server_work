@@ -1445,6 +1445,7 @@ let localhost = "http://192.168.0.10:6923";
 const publicDirectoryUrl = localhost + "/public";
 const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
+let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 
 //// 3.js initialisations
 // camera, scene init
@@ -1579,14 +1580,15 @@ ddownList.addEventListener('click', function () {
                 spanElement.setAttribute('id', 'spanFor' + dim);
                 spanElement.innerText = rangeControlElement.value;
                 
-                // add all the elements to the DOM in the control Panel
+                // add all the elements to the DOM in the control
+                // Panel
                 controlPanelForm.appendChild(labelForRangeControl);
                 controlPanelForm.appendChild(rangeControlElement);
                 controlPanelForm.appendChild(spanElement);
                 controlPanelForm.appendChild(breakElement);
                 
-                // connect rangeControlElement to onchange listeners for
-                // display change on the numeric outputs
+                // connect rangeControlElement to onchange listeners
+                // for display change on the numeric outputs
                 rangeControlElement.addEventListener('change', () => {
                     // get the corresponding span element
                     let spanElement = document.getElementById('spanFor' + dim);
@@ -1596,7 +1598,8 @@ ddownList.addEventListener('click', function () {
             let submitElement = document.createElement('button');
             submitElement.type = "button";
             submitElement.innerText = "Update CAD";
-            // attach an event listener to the submit button = Update CAD
+            // attach an event listener to the submit button = Update
+            // CAD
             submitElement.addEventListener('click', () => {
                 let allInputs = document.querySelectorAll('input');
                 flaskServerResponsePanel.innerHTML = "";
@@ -1606,16 +1609,29 @@ ddownList.addEventListener('click', function () {
                 });
                 // also pass the filename
                 flaskServerPostReqBody['filename'] = ddownList.value;
+                console.log("this is the POST req body");
                 console.log(flaskServerPostReqBody);
                 let responseFromFlaskServer = httpRequestHandler(
                     fusionFlaskServerUrl, flaskServerPostReqBody, 'POST');
                 flaskServerResponsePanel.innerText = responseFromFlaskServer;
                 setTimeout(() => {
                     flaskServerResponsePanel.innerText = "";
-                }, 8000);
-                clickCounter = 2; // make the counter >1 so that stl reloads
-                console.log('firing click event ot reload model on front end');
-                ddownList.click(); // fire a click event on the ddwon list
+                    console.log("sending req to lcnc");
+                    let respnseFromFlaskServerLCNCUrl = httpRequestHandler(
+                        fusionFlaskServerLCNCUrl, null, 'GET'
+                    );
+                    console.log(respnseFromFlaskServerLCNCUrl);
+                    flaskServerResponsePanel.innerText = respnseFromFlaskServerLCNCUrl;
+                    setTimeout(() => {
+                        flaskServerResponsePanel.innerText = "";
+                    }, 5000);
+                    
+                }, 5000);
+                clickCounter = 2; // make the counter >1 so that stl
+                                  // reloads
+                console.log('firing click event to reload model on front end');
+                ddownList.click(); // fire a click event on the ddwon
+                                   // list
             });
             controlPanelForm.appendChild(breakElement);
             controlPanelForm.appendChild(submitElement);

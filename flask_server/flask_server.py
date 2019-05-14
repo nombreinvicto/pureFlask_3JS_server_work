@@ -17,7 +17,7 @@ try:
         flask_app_PORT, lcnc_upload_url
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     from flask import request
-    import threading, json, requests, time
+    import threading, json, requests, time, os
 
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -54,6 +54,17 @@ def fusion360():
 def stop_server():
     shutdown_server()
     return "shutting down server"
+
+
+@flask_app.route('/send_gcode_to_lcnc')
+def send_gcode():
+    p1 = os.path.dirname(os.path.dirname(__file__))
+    p2 = p1 + r'/flask_app/stl'
+
+    with open(p2 + r"/flowsnake.ngc") as file:
+        files = {'file': file}
+        r = requests.post(lcnc_upload_url, files=files)
+        return r.text  # reply to be sent back to 3js
 
 
 # the event handler that responds to the custom event being fired
