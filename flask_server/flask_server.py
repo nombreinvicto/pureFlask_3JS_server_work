@@ -13,7 +13,8 @@ flask_server_to_3js_reply = None
 
 try:
     from pureFlask_3JS_Server.flask_app \
-        import flask_app, cadMetaDataPath, flaskKwargs, flask_app_PORT
+        import flask_app, cadMetaDataPath, flaskKwargs, \
+        flask_app_PORT, lcnc_upload_url
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     from flask import request
     import threading, json, requests, time
@@ -44,6 +45,8 @@ def fusion360():
     while not flaskServerReplyBit:
         pass
     flaskServerReplyBit = False
+
+    # now send the file to LCNC
     return flask_server_to_3js_reply
 
 
@@ -61,14 +64,15 @@ class ThreadEventHandler(adsk.core.CustomEventHandler):
 
     def notify(self, args: adsk.core.CustomEventArgs):
         try:
-            # Make sure a command isn'server_thread running before changes are
-            # made.
+            # Make sure a command isn'server_thread running before
+            # changes are made.
             global flaskServerReplyBit, flask_server_to_3js_reply
             if ui.activeCommand != 'SelectCommand':
                 ui.commandDefinitions.itemById(
                     'SelectCommand').execute()
 
-            # Get the value from the JSON data passed through the event.
+            # Get the value from the JSON data
+            # passed through the event.
             eventArgs = json.loads(args.additionalInfo)
             design = adsk.fusion.Design.cast(app.activeProduct)
             rootComp = design.rootComponent
@@ -171,7 +175,6 @@ def go_stop_server():
     while server_thread.is_alive():
         # keep on looping until thread exits
         pass
-    # ui.messageBox('is server still running: ' + str(server_thread.is_alive()))
 
 
 def attach_addin_button():
