@@ -2,8 +2,10 @@ app = None
 ui = None
 handlers = []
 stopFlag = None
-myCustomEvent = 'MyCustomEventId'
-customEvent = None
+paramChangeCustomEventId = 'paramChangeEventId'
+toolpathGenerateCustomEventId = 'toolpathGenerateEventId'
+paramChangeCustomEvent = None
+toolpathGenerateCustomEvent = None
 flaskServerReplyBit = False
 addInsPanel = None
 server_thread = None
@@ -40,7 +42,7 @@ def fusion360():
     global flaskServerReplyBit, flask_server_to_3js_reply
 
     args = request.get_json()  # returns a dict
-    app.fireCustomEvent(myCustomEvent, json.dumps(args))
+    app.fireCustomEvent(paramChangeCustomEventId, json.dumps(args))
 
     # wait till the model updates then reply to CAD server
     while not flaskServerReplyBit:
@@ -59,18 +61,27 @@ def stop_server():
 
 @flask_app.route('/send_gcode_to_lcnc')
 def send_gcode():
-    p1 = os.path.dirname(os.path.dirname(__file__))
-    p2 = p1 + r'/flask_app/stl'
+    try:
+        # p1 = os.path.dirname(os.path.dirname(__file__))
+        # p2 = p1 + r'/flask_app/stl'
+        #
+        # with open(p2 + r"/flowsnake.ngc") as file:
+        #     files = {'file': file}
+        #     r = requests.post(lcnc_upload_url, files=files)
+        #     return r.text  # reply to be sent back to 3js
+        app.fireCustomEvent(toolpathGenerateCustomEventId,
+                            json.dumps({
+                                'a': 0}))
+        return "Toolpath generate event fired"
 
-    with open(p2 + r"/flowsnake.ngc") as file:
-        files = {'file': file}
-        r = requests.post(lcnc_upload_url, files=files)
-        return r.text  # reply to be sent back to 3js
+    except:
+        if ui:
+            ui.messageBox(
+                'Failed:\n{}'.format(traceback.format_exc()))
 
 
-# the event handler that responds to the custom event being fired
-
-class ThreadEventHandler(adsk.core.CustomEventHandler):
+# event handler to handle parameter change command from 3JS
+class ParamChangeEventHandler(adsk.core.CustomEventHandler):
     def __init__(self):
         super().__init__()
 
@@ -141,6 +152,72 @@ class ThreadEventHandler(adsk.core.CustomEventHandler):
             # allow the flask server to reply now
             flask_server_to_3js_reply = "F360 Param Change Successful"
             flaskServerReplyBit = True
+        except:
+            if ui:
+                ui.messageBox(
+                    'Failed:\n{}'.format(traceback.format_exc()))
+
+
+# event handler to handle toolpath regenration request from 3JS
+class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args: adsk.core.CustomEventArgs):
+        try:
+            # change the workspace to CAM ws
+            designWs = ui.workspaces.itemById(
+                'FusionSolidEnvironment')
+            camWs = ui.workspaces.itemById('CAMEnvironment')
+            camWs.activate()
+
+            # now regenerate all toolpaths
+            doc = app.activeDocument
+            products = doc.products
+            camProduct = products.itemByProductType('CAMProductType')
+            cam = adsk.cam.CAM.cast(camProduct)
+
+            if not cam:
+                ui.messageBox(
+                    'No CAM data exists in the active document.')
+                return
+
+            # Verify that there are any setups.
+            if cam.allOperations.count == 0:
+                ui.messageBox(
+                    'No CAM operations exist in the active document.')
+                return
+
+            future = cam.generateAllToolpaths(False)
+
+            # create the progress dialog
+            progress = ui.createProgressDialog()
+            progress.isCancelButtonShown = False
+            progress.show('ToolPath Generation Progress',
+                          'Generating Toolpaths', 0, 10)
+
+            while not future.isGenerationCompleted:
+                # since toolpaths are calculated in parallel, loop the progress bar while the toolpaths
+                # are being generated but none are yet complete.
+                n = 0
+                start = time.time()
+                while future.numberOfCompleted == 0:
+                    if time.time() - start > .125:  # increment the progess value every .125 seconds.
+                        start = time.time()
+                        n += 1
+                        progress.progressValue = n
+                        adsk.doEvents()
+                    if n > 10:
+                        n = 0
+            progress.hide()
+            ui.messageBox("All toolpath generation complete")
+            designWs.activate()
+
+
+
+
+
+
         except:
             if ui:
                 ui.messageBox(
@@ -230,11 +307,22 @@ def attach_addin_button():
 def run(context):
     try:
         # Register the custom event and connect the handler
-        global customEvent, server_thread, server_process
-        customEvent = app.registerCustomEvent(myCustomEvent)
-        onThreadEvent = ThreadEventHandler()
-        customEvent.add(onThreadEvent)
+        global paramChangeCustomEvent, server_thread, \
+            toolpathGenerateCustomEvent
+
+        paramChangeCustomEvent = app.registerCustomEvent(
+            paramChangeCustomEventId)
+
+        toolpathGenerateCustomEvent = app.registerCustomEvent(
+            toolpathGenerateCustomEventId)
+
+        onThreadEvent = ParamChangeEventHandler()
+        paramChangeCustomEvent.add(onThreadEvent)
         handlers.append(onThreadEvent)
+
+        onThreadEvent2 = RegenerateToolPathEventHandler()
+        toolpathGenerateCustomEvent.add(onThreadEvent2)
+        handlers.append(onThreadEvent2)
 
         # add addin buttons to the toolbar
         attach_addin_button()
@@ -260,8 +348,12 @@ def stop(context):
         if ctrl:
             ctrl.deleteMe()
 
-        customEvent.remove(handlers[0])
-        app.unregisterCustomEvent(myCustomEvent)
+        paramChangeCustomEvent.remove(handlers[0])
+        app.unregisterCustomEvent(paramChangeCustomEventId)
+
+        toolpathGenerateCustomEvent.remove(handlers[1])
+        app.unregisterCustomEvent(toolpathGenerateCustomEventId)
+
         ui.messageBox('FusionThreeJS Addin Stopped. \n' +
                       'Addon reload can only occur with next Fusion restart.')
 
