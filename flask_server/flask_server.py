@@ -83,10 +83,18 @@ class ThreadEventHandler(adsk.core.CustomEventHandler):
                 ui.commandDefinitions.itemById(
                     'SelectCommand').execute()
 
-            # Get the value from the JSON data
-            # passed through the event.
+            # change the workspace first and show the design ws
+            ws = ui.workspaces.itemById('FusionSolidEnvironment')
+            ws.activate()
+
+            # Get the value from JSON data passed through the event.
+            doc = app.activeDocument
+            products = doc.products
+            designProduct = products.itemByProductType(
+                'DesignProductType')
+
             eventArgs = json.loads(args.additionalInfo)
-            design = adsk.fusion.Design.cast(app.activeProduct)
+            design = adsk.fusion.Design.cast(designProduct)
             rootComp = design.rootComponent
             fileName = None
             outJsonMetaData = {}
