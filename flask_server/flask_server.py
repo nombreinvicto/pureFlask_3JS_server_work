@@ -196,27 +196,21 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
             progress.show('ToolPath Generation Progress',
                           'Generating Toolpaths', 0, 10)
 
+            n = 0
+            start = time.time()
             while not future.isGenerationCompleted:
                 # since toolpaths are calculated in parallel, loop the progress bar while the toolpaths
                 # are being generated but none are yet complete.
-                n = 0
-                start = time.time()
-                while future.numberOfCompleted == 0:
-                    if time.time() - start > .125:  # increment the progess value every .125 seconds.
-                        start = time.time()
-                        n += 1
-                        progress.progressValue = n
-                        adsk.doEvents()
-                    if n > 10:
-                        n = 0
+                if time.time() - start > .125:  # increment the progess value every .125 seconds.
+                    start = time.time()
+                    n += 1
+                    progress.progressValue = n
+                    adsk.doEvents()
+                if n > 10:
+                    n = 0
             progress.hide()
             ui.messageBox("All toolpath generation complete")
             designWs.activate()
-
-
-
-
-
 
         except:
             if ui:
