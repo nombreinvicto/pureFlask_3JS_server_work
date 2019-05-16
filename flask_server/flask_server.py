@@ -10,6 +10,7 @@ server_thread = None
 server_process = None
 app_run_tracker = False
 flask_server_to_3js_reply = None
+localhost = "http://192.168.0.10:6923"
 
 try:
     from pureFlask_3JS_Server.flask_app \
@@ -176,7 +177,7 @@ def go_stop_server():
     global app_run_tracker
     # only stop server on repress of addin button
     # dont execute when user turning off addin via dialog
-    r = requests.post(url="http://192.168.0.10:6923/shutdown")
+    r = requests.post(url=localhost + "/shutdown")
     ui.messageBox(str(r.text) + '\n' +
                   'please make sure to stop the addin from scripts '
                   'toolbar')
