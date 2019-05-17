@@ -68,20 +68,17 @@ def stop_server():
 def send_gcode():
     global send_gcode_to_lcnc_flag
     try:
-        #
-        # with open(p2 + r"/flowsnake.ngc") as file:
-        #     files = {'file': file}
-        #     r = requests.post(lcnc_upload_url, files=files)
-        #     return r.text  # reply to be sent back to 3js
         app.fireCustomEvent(toolpathGenerateCustomEventId,
-                            json.dumps({
-                                'a': 0}))
-
+                            json.dumps({'a': 0}))
+        ui.messageBox('going to send file to lcnc')
         while not send_gcode_to_lcnc_flag:
             pass
         send_gcode_to_lcnc_flag = False
-        with open(os.path.join(global_output_folder,
-                               global_ngc_file_name + '.nc')) as file:
+
+        with open(
+                os.path.join(global_output_folder,
+                             global_ngc_file_name + '.nc'),
+                'r') as file:
             files = {'file': file}
             r = requests.post(lcnc_upload_url, files=files)
             return r.text  # reply to be sent back to 3js
@@ -240,11 +237,13 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
             # create the POST input object
             postInput = adsk.cam.PostProcessInput.create(
                 programName, postConfig, outputFolder, units)
+            postInput.isOpenInEditor = False
 
             # post all toolpaths in the document
             cam.postProcessAll(postInput)
             designWs.activate()
             send_gcode_to_lcnc_flag = True
+            ui.messageBox('Changed to true')
 
         except:
             if ui:
