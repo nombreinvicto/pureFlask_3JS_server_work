@@ -13,6 +13,8 @@ server_process = None
 app_run_tracker = False
 flask_server_to_3js_reply = None
 localhost = "http://192.168.0.10:6923"
+global_ngc_file_name = '1001'
+send_gcode_to_lcnc_flag = False
 
 try:
     from pureFlask_3JS_Server.flask_app \
@@ -27,6 +29,9 @@ try:
 except:
     if ui:
         ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+global_output_folder = os.path.dirname(
+    os.path.dirname(__file__)) + r'/flask_app/stl'
 
 
 # flask related things
@@ -61,9 +66,8 @@ def stop_server():
 
 @flask_app.route('/send_gcode_to_lcnc')
 def send_gcode():
+    global send_gcode_to_lcnc_flag
     try:
-        # p1 = os.path.dirname(os.path.dirname(__file__))
-        # p2 = p1 + r'/flask_app/stl'
         #
         # with open(p2 + r"/flowsnake.ngc") as file:
         #     files = {'file': file}
@@ -72,7 +76,15 @@ def send_gcode():
         app.fireCustomEvent(toolpathGenerateCustomEventId,
                             json.dumps({
                                 'a': 0}))
-        return "Toolpath generate event fired"
+
+        while not send_gcode_to_lcnc_flag:
+            pass
+        send_gcode_to_lcnc_flag = False
+        with open(os.path.join(global_output_folder,
+                               global_ngc_file_name + '.nc')) as file:
+            files = {'file': file}
+            r = requests.post(lcnc_upload_url, files=files)
+            return r.text  # reply to be sent back to 3js
 
     except:
         if ui:
@@ -164,6 +176,7 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
         super().__init__()
 
     def notify(self, args: adsk.core.CustomEventArgs):
+        global send_gcode_to_lcnc_flag
         try:
             # change the workspace to CAM ws
             designWs = ui.workspaces.itemById(
@@ -210,7 +223,28 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
                     n = 0
             progress.hide()
             ui.messageBox("All toolpath generation complete")
+
+            # now post the NC files
+            # specify the program name
+            programName = global_ngc_file_name
+
+            # specify the destination folder
+            outputFolder = global_output_folder
+
+            # specify a post configuration to use
+            postConfig = cam.genericPostFolder + '/' + 'fanuc.cps'
+
+            # specify the NC file output units
+            units = adsk.cam.PostOutputUnitOptions.DocumentUnitsOutput
+
+            # create the POST input object
+            postInput = adsk.cam.PostProcessInput.create(
+                programName, postConfig, outputFolder, units)
+
+            # post all toolpaths in the document
+            cam.postProcessAll(postInput)
             designWs.activate()
+            send_gcode_to_lcnc_flag = True
 
         except:
             if ui:
