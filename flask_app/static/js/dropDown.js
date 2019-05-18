@@ -209,24 +209,22 @@ ddownList.addEventListener('click', function () {
                                    // list
             });
             controlPanelForm.appendChild(submitElement);
+            
+            // now add button for gcode export
             let submitElement2 = document.createElement('button');
             let spanElement2 = document.createElement('span');
             submitElement2.type = 'button';
             submitElement2.innerText = "Repost ToolPath";
             controlPanelForm.appendChild(spanElement2);
             controlPanelForm.appendChild(submitElement2);
-            
             submitElement2.addEventListener('click', () => {
                 console.log("sending req to lcnc");
-                
                 // g code generation takes long time. so
                 // making this ajax call asynchronous
                 httpRequestHandler(
                     fusionFlaskServerLCNCUrl, null, 'GET',
                     true, flaskServerResponsePanel);
-                
             });
-            
         });
     }
 });
