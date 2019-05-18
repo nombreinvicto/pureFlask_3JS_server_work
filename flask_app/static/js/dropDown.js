@@ -202,13 +202,6 @@ ddownList.addEventListener('click', function () {
                 flaskServerResponsePanel.innerText = responseFromFlaskServer;
                 setTimeout(() => {
                     flaskServerResponsePanel.innerText = "";
-                    console.log("sending req to lcnc");
-                    
-                    // g code generation takes long time. so
-                    // making this ajax call asynchronous
-                    httpRequestHandler(
-                        fusionFlaskServerLCNCUrl, null, 'GET',
-                        true, flaskServerResponsePanel);
                 }, 2000);
                 clickCounter = 2; // make the counter >1 so that stl
                                   // reloads
@@ -216,6 +209,24 @@ ddownList.addEventListener('click', function () {
                                    // list
             });
             controlPanelForm.appendChild(submitElement);
+            let submitElement2 = document.createElement('button');
+            let spanElement2 = document.createElement('span');
+            submitElement2.type = 'button';
+            submitElement2.innerText = "Repost ToolPath";
+            controlPanelForm.appendChild(spanElement2);
+            controlPanelForm.appendChild(submitElement2);
+            
+            submitElement2.addEventListener('click', () => {
+                console.log("sending req to lcnc");
+                
+                // g code generation takes long time. so
+                // making this ajax call asynchronous
+                httpRequestHandler(
+                    fusionFlaskServerLCNCUrl, null, 'GET',
+                    true, flaskServerResponsePanel);
+                
+            });
+            
         });
     }
 });
