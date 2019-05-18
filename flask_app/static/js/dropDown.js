@@ -187,7 +187,7 @@ ddownList.addEventListener('click', function () {
                         flaskServerResponsePanel.innerText = "";
                     }, 5000);
                     
-                }, 5000);
+                }, 2000);
                 clickCounter = 2; // make the counter >1 so that stl
                                   // reloads
                 console.log('firing click event to reload model on front end');

@@ -70,7 +70,7 @@ def send_gcode():
     try:
         app.fireCustomEvent(toolpathGenerateCustomEventId,
                             json.dumps({'a': 0}))
-        ui.messageBox('going to send file to lcnc')
+
         while not send_gcode_to_lcnc_flag:
             pass
         send_gcode_to_lcnc_flag = False
@@ -219,7 +219,6 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
                 if n > 10:
                     n = 0
             progress.hide()
-            ui.messageBox("All toolpath generation complete")
 
             # now post the NC files
             # specify the program name
@@ -242,8 +241,11 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
             # post all toolpaths in the document
             cam.postProcessAll(postInput)
             designWs.activate()
+
+            # wait for some time. probably saving file is async func
+            time.sleep(3)
             send_gcode_to_lcnc_flag = True
-            ui.messageBox('Changed to true')
+
 
         except:
             if ui:
