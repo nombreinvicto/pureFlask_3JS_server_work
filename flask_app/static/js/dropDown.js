@@ -53,9 +53,21 @@ let createLighting = function () {
 
 //// gets the current STL file contents
 // this actually makes an ajax call
-function httpRequestHandler(url, body, method) {
+function httpRequestHandler(url, body, method, asyncState = false, asyncResponseObject) {
     let xmlHttp = new XMLHttpRequest();
-    xmlHttp.open(method, url, false);
+    
+    if (asyncState) {
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState === XMLHttpRequest.DONE && xmlHttp.status === 200) {
+                asyncResponseObject.innerText = xmlHttp.responseText;
+                setTimeout(() => {
+                    asyncResponseObject.innerText = "";
+                }, 5000);
+            }
+        };
+    }
+    
+    xmlHttp.open(method, url, asyncState);
     if (method === 'POST') {
         xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     }
@@ -178,15 +190,12 @@ ddownList.addEventListener('click', function () {
                 setTimeout(() => {
                     flaskServerResponsePanel.innerText = "";
                     console.log("sending req to lcnc");
-                    let respnseFromFlaskServerLCNCUrl = httpRequestHandler(
-                        fusionFlaskServerLCNCUrl, null, 'GET'
-                    );
-                    console.log(respnseFromFlaskServerLCNCUrl);
-                    flaskServerResponsePanel.innerText = respnseFromFlaskServerLCNCUrl;
-                    setTimeout(() => {
-                        flaskServerResponsePanel.innerText = "";
-                    }, 5000);
                     
+                    // g code generation takes long time. so
+                    // making this ajax call asynchronous
+                    httpRequestHandler(
+                        fusionFlaskServerLCNCUrl, null, 'GET',
+                        true, flaskServerResponsePanel);
                 }, 2000);
                 clickCounter = 2; // make the counter >1 so that stl
                                   // reloads
