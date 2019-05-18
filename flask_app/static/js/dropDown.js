@@ -19,7 +19,7 @@ camera.position.z = 1000;
 
 // renderer init
 renderer = new THREE.WebGLRenderer();
-renderer.setSize(1025, window.innerHeight * (3 / 4));
+renderer.setSize(window.innerWidth * (3 / 4), window.innerHeight * (3 / 4));
 document.getElementById('renderOutput').appendChild(renderer.domElement);
 
 // OrbitalControl init
@@ -57,12 +57,25 @@ function httpRequestHandler(url, body, method, asyncState = false, asyncResponse
     let xmlHttp = new XMLHttpRequest();
     
     if (asyncState) {
+        xmlHttp.timeout = 5 * 60 * 1000;
+        xmlHttp.ontimeout = function () {
+            asyncResponseObject.innerText = "LCNC Response Timed Out";
+            setTimeout(() => {
+                asyncResponseObject.innerText = "";
+            }, 3000);
+        };
         xmlHttp.onreadystatechange = function () {
             if (xmlHttp.readyState === XMLHttpRequest.DONE && xmlHttp.status === 200) {
                 asyncResponseObject.innerText = xmlHttp.responseText;
                 setTimeout(() => {
                     asyncResponseObject.innerText = "";
                 }, 5000);
+            } else if (xmlHttp.status === 500) {
+                asyncResponseObject.innerText = "Internal server" +
+                    " error occured";
+                setTimeout(() => {
+                    asyncResponseObject.innerText = "";
+                }, 3000);
             }
         };
     }
@@ -77,6 +90,9 @@ function httpRequestHandler(url, body, method, asyncState = false, asyncResponse
 
 // stl file drop down list initialisations
 let ddownList = document.getElementById('selectSTL');
+let panelNameElement = document.getElementById("panelName");
+panelNameElement.innerHTML = "<b>Control Panel</b>";
+
 let controlPanelForm = document.getElementById('controlPanel');
 let fileList = JSON.parse(httpRequestHandler(publicDirectoryUrl, null, 'GET'));
 let flaskServerResponsePanel = document.getElementById('flaskServerResponse');
@@ -114,28 +130,22 @@ ddownList.addEventListener('click', function () {
             }
             createLighting();
             scene.add(mesh);
-            console.log('done adding model to scene');
             
             // first make sure the form element is empty
             controlPanelForm.innerHTML = "";
             
             // parse the stl json meta data to populate controls panel
             let cadMetaData = httpRequestHandler(cadMetaDataUrl + ddownList.value, null, 'GET');
-            console.log(cadMetaData);
             const cadJsonMetaData = JSON.parse(cadMetaData);
-            console.log("this is cadjosnmetadata");
-            console.log(cadJsonMetaData);
             
-            let breakElement;
             for (let dim in cadJsonMetaData) {
-                let rangeControlElement = document.createElement('input');
+                
                 let labelForRangeControl = document.createElement('label');
-                breakElement = document.createElement("br");
+                let rangeControlElement = document.createElement('input');
                 let spanElement = document.createElement('span');
                 
-                console.log("this is the json metadata read");
+                console.log("CAD metadata:");
                 console.log(cadJsonMetaData);
-                console.log(dim);
                 
                 // creating the range element
                 rangeControlElement.type = "range";
@@ -143,7 +153,7 @@ ddownList.addEventListener('click', function () {
                 rangeControlElement.max = cadJsonMetaData[dim]["max"];
                 rangeControlElement.name = dim;
                 rangeControlElement.id = dim;
-                rangeControlElement.step = "5";
+                rangeControlElement.step = "2";
                 rangeControlElement.setAttribute('value', cadJsonMetaData[dim]["currentValue"]);
                 
                 labelForRangeControl.setAttribute('for', dim);
@@ -155,10 +165,12 @@ ddownList.addEventListener('click', function () {
                 
                 // add all the elements to the DOM in the control
                 // Panel
-                controlPanelForm.appendChild(labelForRangeControl);
-                controlPanelForm.appendChild(rangeControlElement);
-                controlPanelForm.appendChild(spanElement);
-                controlPanelForm.appendChild(breakElement);
+                let parElem1 = document.createElement("p");
+                let parElem2 = document.createElement("p");
+                
+                parElem1.appendChild(labelForRangeControl);
+                parElem2.append(rangeControlElement, spanElement);
+                controlPanelForm.append(parElem1, parElem2);
                 
                 // connect rangeControlElement to onchange listeners
                 // for display change on the numeric outputs
@@ -182,7 +194,8 @@ ddownList.addEventListener('click', function () {
                 });
                 // also pass the filename
                 flaskServerPostReqBody['filename'] = ddownList.value;
-                console.log("this is the POST req body");
+                console.log("this is the POST req body before" +
+                                " param change");
                 console.log(flaskServerPostReqBody);
                 let responseFromFlaskServer = httpRequestHandler(
                     fusionFlaskServerUrl, flaskServerPostReqBody, 'POST');
@@ -199,11 +212,9 @@ ddownList.addEventListener('click', function () {
                 }, 2000);
                 clickCounter = 2; // make the counter >1 so that stl
                                   // reloads
-                console.log('firing click event to reload model on front end');
                 ddownList.click(); // fire a click event on the ddwon
                                    // list
             });
-            controlPanelForm.appendChild(breakElement);
             controlPanelForm.appendChild(submitElement);
         });
     }

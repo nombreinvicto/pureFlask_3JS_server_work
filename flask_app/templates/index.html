@@ -1,8 +1,10 @@
 {% extends "layout.html" %}
 
 {% block body %}
+    <div id="topBanner"></div>
+    <p></p>
     <div id="selectTab">
-        <select name="" id="selectSTL">
+        <select id="selectSTL">
             <option value="0">--Please choose a STL model--</option>
         </select>
     </div>
@@ -11,6 +13,7 @@
     </div>
     <br>
     <div id='parent_div'>
+        <div id="panelName"></div>
         <div id="controlPanel">
         </div>
         <div id="flaskServerResponse"></div>
