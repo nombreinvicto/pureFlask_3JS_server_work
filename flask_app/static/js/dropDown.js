@@ -57,7 +57,7 @@ function httpRequestHandler(url, body, method, asyncState = false, asyncResponse
     let xmlHttp = new XMLHttpRequest();
     
     if (asyncState) {
-        xmlHttp.timeout = 5 * 60 * 1000;
+        xmlHttp.timeout = 5 * 60 * 1000; // 5 min LCNC timeout
         xmlHttp.ontimeout = function () {
             asyncResponseObject.innerText = "LCNC Response Timed Out";
             setTimeout(() => {

@@ -15,6 +15,7 @@ flask_server_to_3js_reply = None
 localhost = "http://192.168.0.10:6923"
 global_ngc_file_name = '1001'
 global_ngc_file_name_export = ''
+global_fusion_open_document_name = ''
 send_gcode_to_lcnc_flag = False
 
 try:
@@ -69,6 +70,12 @@ def stop_server():
 def send_gcode():
     global send_gcode_to_lcnc_flag
     try:
+        if app.activeDocument.name != \
+                global_fusion_open_document_name:
+            return 'F360 active document incompatible \n ' \
+                   'with current STL file or no param \n ' \
+                   'change has still been made to model.'
+
         app.fireCustomEvent(toolpathGenerateCustomEventId,
                             json.dumps({'a': 0}))
 
@@ -110,7 +117,8 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
             # changes are made.
             global flaskServerReplyBit, \
                 flask_server_to_3js_reply, \
-                global_ngc_file_name_export
+                global_ngc_file_name_export, \
+                global_fusion_open_document_name
 
             if ui.activeCommand != 'SelectCommand':
                 ui.commandDefinitions.itemById(
@@ -134,6 +142,7 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
 
             # check if the file is the same as that one loaded in F360
             doc_name = eventArgs['filename'][0:-4]
+            global_fusion_open_document_name = doc_name
             if app.activeDocument.name != doc_name:
                 flask_server_to_3js_reply = 'F360 active document ' \
                                             'incompatible \n with current STL file'
@@ -189,7 +198,7 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
         super().__init__()
 
     def notify(self, args: adsk.core.CustomEventArgs):
-        global send_gcode_to_lcnc_flag
+        global send_gcode_to_lcnc_flag, flask_server_to_3js_reply
         try:
             # change the workspace to CAM ws
             designWs = ui.workspaces.itemById(
