@@ -14,6 +14,7 @@ app_run_tracker = False
 flask_server_to_3js_reply = None
 localhost = "http://192.168.0.10:6923"
 global_ngc_file_name = '1001'
+global_ngc_file_name_export = ''
 send_gcode_to_lcnc_flag = False
 
 try:
@@ -75,10 +76,19 @@ def send_gcode():
             pass
         send_gcode_to_lcnc_flag = False
 
-        with open(
-                os.path.join(global_output_folder,
-                             global_ngc_file_name + '.nc'),
-                'r') as file:
+        # first rename the g code file to be exported
+        src = os.path.join(global_output_folder,
+                           global_ngc_file_name + '.nc')
+        dst = os.path.join(global_output_folder,
+                           global_ngc_file_name_export)
+        if global_ngc_file_name_export \
+                in os.listdir(global_output_folder):
+            os.remove(dst)  # delete the already existing file
+
+        os.rename(src, dst)
+
+        # now open the renamed file and export it to LCNC
+        with open(os.path.join(dst), 'r') as file:
             files = {'file': file}
             r = requests.post(lcnc_upload_url, files=files)
             return r.text  # reply to be sent back to 3js
@@ -98,7 +108,10 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
         try:
             # Make sure a command isn'server_thread running before
             # changes are made.
-            global flaskServerReplyBit, flask_server_to_3js_reply
+            global flaskServerReplyBit, \
+                flask_server_to_3js_reply, \
+                global_ngc_file_name_export
+
             if ui.activeCommand != 'SelectCommand':
                 ui.commandDefinitions.itemById(
                     'SelectCommand').execute()
@@ -144,6 +157,9 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                 else:
                     fileName = val
 
+            # save filename for future g code export
+            global_ngc_file_name_export = \
+                fileName[0:-4].replace(" ", "") + ".ngc"
             # Save the file as STL.
             exportMgr = adsk.fusion.ExportManager.cast(
                 design.exportManager)
@@ -243,7 +259,7 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
             designWs.activate()
 
             # wait for some time. probably saving file is async func
-            time.sleep(3)
+            time.sleep(4)
             send_gcode_to_lcnc_flag = True
 
 
