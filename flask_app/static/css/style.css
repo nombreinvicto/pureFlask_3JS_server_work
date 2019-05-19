@@ -58,6 +58,12 @@ canvas {
     margin-top: 20px;
 }
 
+#flaskServerResponsePanelName {
+    color: darkblue;
+    font-size: 20px;
+    font-style: italic;
+}
+
 
 #flaskServerResponse {
     float: left;

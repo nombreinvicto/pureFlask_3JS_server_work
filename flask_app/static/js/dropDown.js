@@ -3,6 +3,7 @@ let THREE = require("./OrbitControls");
 
 // set up all links for AJAX requests
 let localhost = "http://192.168.0.10:6923";
+// let localhost = "http://110d923f.ngrok.io";
 const publicDirectoryUrl = localhost + "/public";
 const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
@@ -57,24 +58,27 @@ function httpRequestHandler(url, body, method, asyncState = false, asyncResponse
     let xmlHttp = new XMLHttpRequest();
     
     if (asyncState) {
+        // asyncState is only true when making request to post new
+        // toolpath
+        asyncResponseObject.innerText = "Posting new toolpath...";
         xmlHttp.timeout = 5 * 60 * 1000; // 5 min LCNC timeout
         xmlHttp.ontimeout = function () {
             asyncResponseObject.innerText = "LCNC Response Timed Out";
             setTimeout(() => {
-                asyncResponseObject.innerText = "";
+                asyncResponseObject.innerText = "IDLE";
             }, 3000);
         };
         xmlHttp.onreadystatechange = function () {
             if (xmlHttp.readyState === XMLHttpRequest.DONE && xmlHttp.status === 200) {
                 asyncResponseObject.innerText = xmlHttp.responseText;
                 setTimeout(() => {
-                    asyncResponseObject.innerText = "";
+                    asyncResponseObject.innerText = "IDLE";
                 }, 5000);
             } else if (xmlHttp.status === 500) {
                 asyncResponseObject.innerText = "Internal server" +
                     " error occured";
                 setTimeout(() => {
-                    asyncResponseObject.innerText = "";
+                    asyncResponseObject.innerText = "IDLE";
                 }, 3000);
             }
         };
@@ -92,6 +96,8 @@ function httpRequestHandler(url, body, method, asyncState = false, asyncResponse
 let ddownList = document.getElementById('selectSTL');
 let panelNameElement = document.getElementById("panelName");
 panelNameElement.innerHTML = "<b>Control Panel</b>";
+let flaskServerResponsePanelName = document.getElementById("flaskServerResponsePanelName");
+flaskServerResponsePanelName.innerHTML = "<b>Status Panel</b>";
 
 let controlPanelForm = document.getElementById('controlPanel');
 let fileList = JSON.parse(httpRequestHandler(publicDirectoryUrl, null, 'GET'));
@@ -186,6 +192,7 @@ ddownList.addEventListener('click', function () {
             // attach an event listener to the submit button = Update
             // CAD
             submitElement.addEventListener('click', () => {
+                
                 let allInputs = document.querySelectorAll('input');
                 flaskServerResponsePanel.innerHTML = "";
                 let flaskServerPostReqBody = {};
@@ -201,8 +208,8 @@ ddownList.addEventListener('click', function () {
                     fusionFlaskServerUrl, flaskServerPostReqBody, 'POST');
                 flaskServerResponsePanel.innerText = responseFromFlaskServer;
                 setTimeout(() => {
-                    flaskServerResponsePanel.innerText = "";
-                }, 2000);
+                    flaskServerResponsePanel.innerText = "IDLE";
+                }, 3000);
                 clickCounter = 2; // make the counter >1 so that stl
                                   // reloads
                 ddownList.click(); // fire a click event on the ddwon
@@ -214,7 +221,7 @@ ddownList.addEventListener('click', function () {
             let submitElement2 = document.createElement('button');
             let spanElement2 = document.createElement('span');
             submitElement2.type = 'button';
-            submitElement2.innerText = "Repost ToolPath";
+            submitElement2.innerText = "POST ToolPath";
             controlPanelForm.appendChild(spanElement2);
             controlPanelForm.appendChild(submitElement2);
             submitElement2.addEventListener('click', () => {

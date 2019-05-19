@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ title }}</title>
+    <link rel="icon"
+          href="{{ url_for('static', filename='dimeLogo.ico') }}">
 </head>
 <body>
     {% block body %}{% endblock body %}
     {% block css %}{% endblock %}
     {% block js %}{% endblock %}
 </body>
-</html>
