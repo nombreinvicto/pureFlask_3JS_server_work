@@ -131,8 +131,8 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
             # Get the value from JSON data passed through the event.
             doc = app.activeDocument
             products = doc.products
-            designProduct = products.itemByProductType(
-                'DesignProductType')
+            designProduct = products \
+                .itemByProductType('DesignProductType')
 
             eventArgs = json.loads(args.additionalInfo)
             design = adsk.fusion.Design.cast(designProduct)
@@ -144,8 +144,9 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
             doc_name = eventArgs['filename'][0:-4]
             global_fusion_open_document_name = doc_name
             if app.activeDocument.name != doc_name:
-                flask_server_to_3js_reply = 'F360 active document ' \
-                                            'incompatible \n with current STL file'
+                flask_server_to_3js_reply = \
+                    'F360 active document ' \
+                    'incompatible \n with current STL file'
                 flaskServerReplyBit = True
                 return
 
@@ -154,11 +155,12 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                 if key != 'filename':
                     outJsonMetaData[key] = val
                     newValue = float(val)
-                    param = design.rootComponent.modelParameters.itemByName(
-                        key)
+                    param = design.rootComponent.modelParameters \
+                        .itemByName(key)
                     if not param:
-                        flask_server_to_3js_reply = "No model present in F360 \n" \
-                                                    "Parameter change attempt failed"
+                        flask_server_to_3js_reply = \
+                            "No model present in F360 \n" \
+                            "Parameter change attempt failed"
                         flaskServerReplyBit = True
                         return
                     param.value = newValue
@@ -173,7 +175,8 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
             exportMgr = adsk.fusion.ExportManager.cast(
                 design.exportManager)
             stlOptions = exportMgr.createSTLExportOptions(rootComp)
-            stlOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementMedium
+            stlOptions.meshRefinement = adsk.fusion \
+                .MeshRefinementSettings.MeshRefinementMedium
             stlOptions.filename = cadMetaDataPath + r"\\" \
                                   + fileName[0:-3] + 'stl'
             exportMgr.execute(stlOptions)
@@ -234,9 +237,11 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
             n = 0
             start = time.time()
             while not future.isGenerationCompleted:
-                # since toolpaths are calculated in parallel, loop the progress bar while the toolpaths
+                # since toolpaths are calculated in parallel,
+                # loop the progress bar while the toolpaths
                 # are being generated but none are yet complete.
-                if time.time() - start > .125:  # increment the progess value every .125 seconds.
+                # increment the progress value every .125 seconds.
+                if time.time() - start > .125:
                     start = time.time()
                     n += 1
                     progress.progressValue = n
@@ -287,12 +292,6 @@ class FlaskThreeJSButtonPressedHandler(
         try:
             global app_run_tracker, server_thread
 
-            # get the command that was created
-            cmd = adsk.core.Command.cast(args.command)
-
-            # get the inputs collection
-            inputs = cmd.commandInputs
-
             # start the flask server thread
             if not app_run_tracker:
                 # thread paradigm
@@ -300,7 +299,7 @@ class FlaskThreeJSButtonPressedHandler(
                                                  kwargs=flaskKwargs)
                 server_thread.setDaemon(True)
                 server_thread.start()
-                app_run_tracker = not app_run_tracker  # convert to True
+                app_run_tracker = not app_run_tracker
                 ui.messageBox('FusionThreeJS Server started at: ' +
                               str(flask_app_PORT))
             else:
@@ -336,8 +335,8 @@ def attach_addin_button():
     flaskThreeJSButtDef = commDefs.addButtonDefinition(
         'flaskThreeJSButtDefID',
         'Start 3JS Server!',
-        'starts a Flask server that serves a 3JS front end app controlling '
-        + 'models in Fusion 360 in real time.',
+        'starts a Flask server that serves a 3JS front end app '
+        'controlling models in Fusion 360 in real time.',
         'resources'
     )
 
