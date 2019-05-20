@@ -3,12 +3,21 @@
 {% block body %}
 
     <img src="../static/jpegs/topBanner.jpg" alt="">
+    <p></p>
 
     <div id="selectTab">
+        <p id="modelSelectionPanel">Model Selection Panel</p>
         <select id="selectSTL">
             <option value="0">--Please choose a STL model--</option>
         </select>
+        <span>
+            <button type="button"
+                    id="refreshDoc">Refresh F360 Document
+            </button>
+        </span>
+        <span id="f360DocOpen"></span>
     </div>
+
     <p></p>
     <div id="renderOutput">
     </div>

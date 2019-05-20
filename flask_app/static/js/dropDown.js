@@ -8,6 +8,7 @@ const publicDirectoryUrl = localhost + "/public";
 const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
+let currentF360DocUrl = localhost + "/currentOpenDoc";
 
 //// 3.js initialisations
 // camera, scene init
@@ -126,11 +127,22 @@ let flaskServerResponsePanelName = document
     .getElementById("flaskServerResponsePanelName");
 flaskServerResponsePanelName.innerHTML = "<b>Status Panel</b>";
 
+// setting/getting up some of the initial HTML elements
 let controlPanelForm = document.getElementById('controlPanel');
 let fileList = JSON
     .parse(httpRequestHandler(publicDirectoryUrl, null, 'GET'));
 let flaskServerResponsePanel = document
     .getElementById('flaskServerResponse');
+let currentF360DocPanel = document.getElementById('f360DocOpen');
+let refreshF360DocButton = document.getElementById('refreshDoc');
+refreshF360DocButton.addEventListener('click', () => {
+    currentF360DocPanel.innerText = httpRequestHandler(
+        currentF360DocUrl,
+        null,
+        "GET"
+    );
+});
+refreshF360DocButton.click();
 
 // populate the drop down list
 for (let _file of fileList) {
@@ -188,7 +200,7 @@ ddownList.addEventListener('click', function () {
                 rangeControlElement.max = cadJsonMetaData[dim]["max"];
                 rangeControlElement.name = dim;
                 rangeControlElement.id = dim;
-                rangeControlElement.step = "2";
+                rangeControlElement.step = "1";
                 rangeControlElement.setAttribute('value', cadJsonMetaData[dim]["currentValue"]);
                 
                 labelForRangeControl.setAttribute('for', dim);

@@ -30,7 +30,7 @@ try:
         flask_app_PORT, lcnc_upload_url
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     from flask import request
-    import threading, json, requests, time, os, socket
+    import threading, json, requests, time, os, socket, webbrowser
 
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -108,6 +108,17 @@ def send_gcode():
             files = {'file': file}
             r = requests.post(lcnc_upload_url, files=files)
             return r.text  # reply to be sent back to 3js
+
+    except:
+        if ui:
+            ui.messageBox(
+                'Failed:\n{}'.format(traceback.format_exc()))
+
+
+@flask_app.route('/currentOpenDoc')
+def getCurrentDoc():
+    try:
+        return str(app.activeDocument.name)
 
     except:
         if ui:
@@ -314,6 +325,7 @@ class FlaskThreeJSButtonPressedHandler(
                 app_run_tracker = not app_run_tracker
                 ui.messageBox('FusionThreeJS Server started at -> ' +
                               localhost)
+                webbrowser.open_new_tab(url=localhost)
             else:
                 # stop the server on second press
                 go_stop_server()
@@ -328,9 +340,7 @@ def go_stop_server():
     # only stop server on repress of addin button
     # dont execute when user turning off addin via dialog
     r = requests.post(url=localhost + "/shutdown")
-    ui.messageBox(str(r.text) + '\n' +
-                  'please make sure to stop the addin from scripts '
-                  'toolbar')
+    ui.messageBox(str(r.text))
     # turn to false again ready for next repress of addin button
     app_run_tracker = not app_run_tracker
 
@@ -392,7 +402,6 @@ def run(context):
         # add addin buttons to the toolbar
         attach_addin_button()
 
-        ui.messageBox('FusionThreeJS Addin Initiated')
     except:
         if ui:
             ui.messageBox(

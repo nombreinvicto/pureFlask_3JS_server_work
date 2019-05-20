@@ -11,13 +11,19 @@ img {
     width: 80%;
 }
 
+#modelSelectionPanel {
+    color: darkblue;
+    font-size: 25px;
+    font-style: italic;
+    font-weight: bold;
+}
+
 
 #selectTab {
     display: block;
     margin-left: auto;
     margin-right: auto;
     width: 80%;
-
 }
 
 
@@ -40,7 +46,6 @@ canvas {
     height: 500px;
     border: 5px solid lightseagreen;
     margin: auto;
-
 }
 
 #panelName {
