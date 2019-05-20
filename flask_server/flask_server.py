@@ -43,6 +43,7 @@ global_output_folder = os.path.dirname(
     os.path.dirname(__file__)) + r'/flask_app/stl'
 local_ip_addr = socket.gethostbyname(socket.gethostname())
 localhost = "http://" + local_ip_addr + ":" + str(flask_app_PORT)
+masked_local_host = "http://f360app.ngrok.io"
 
 
 # flask related things
@@ -317,14 +318,21 @@ class FlaskThreeJSButtonPressedHandler(
 
             # start the flask server thread
             if not app_run_tracker:
-                # thread paradigm
                 server_thread = threading.Thread(target=flask_app.run,
                                                  kwargs=flaskKwargs)
                 server_thread.setDaemon(True)
                 server_thread.start()
+
+                # start the ngrok thread
+                ngrok_thread = threading.Thread(
+                    target=start_ngrok_process)
+                ngrok_thread.setDaemon(True)
+                ngrok_thread.start()
+
                 app_run_tracker = not app_run_tracker
-                ui.messageBox('FusionThreeJS Server started at -> ' +
-                              localhost)
+                ui.messageBox('FusionThreeJS Server started at -> '
+                              '\n' + localhost +
+                              '\n' + masked_local_host)
                 webbrowser.open_new_tab(url=localhost)
             else:
                 # stop the server on second press
@@ -335,6 +343,8 @@ class FlaskThreeJSButtonPressedHandler(
                     'Failed:\n{}'.format(traceback.format_exc()))
 
 
+# all auxiliary utility functions below
+# stops the server
 def go_stop_server():
     global app_run_tracker
     # only stop server on repress of addin button
@@ -349,6 +359,7 @@ def go_stop_server():
         pass
 
 
+# attaches the buttons to the toolbar
 def attach_addin_button():
     # get the command definition
     commDefs = ui.commandDefinitions
@@ -377,6 +388,15 @@ def attach_addin_button():
     flaskThreeJSButtHandler = FlaskThreeJSButtonPressedHandler()
     flaskThreeJSButtDef.commandCreated.add(flaskThreeJSButtHandler)
     handlers.append(flaskThreeJSButtHandler)
+
+
+# start ngrok process
+def start_ngrok_process():
+    try:
+        os.system(
+            'ngrok http --subdomain=f360app ' + str(flask_app_PORT))
+    except:
+        pass
 
 
 def run(context):

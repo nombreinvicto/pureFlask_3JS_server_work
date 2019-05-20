@@ -2,8 +2,8 @@
 let THREE = require("./OrbitControls");
 
 // set up all links for AJAX requests
-let localhost = "http://192.168.0.10:6923";
-// let localhost = "http://110d923f.ngrok.io";
+//let localhost = "http://192.168.0.10:6923";
+let localhost = "http://f360app.ngrok.io";
 const publicDirectoryUrl = localhost + "/public";
 const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
