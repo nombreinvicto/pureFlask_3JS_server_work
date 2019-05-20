@@ -20,7 +20,8 @@ camera.position.z = 1000;
 
 // renderer init
 renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth * (3 / 4), window.innerHeight * (3 / 4));
+renderer.setSize(window.innerWidth * (3 / 4),
+                 window.innerHeight * (3 / 4));
 document.getElementById('renderOutput').appendChild(renderer.domElement);
 
 // OrbitalControl init
@@ -88,7 +89,8 @@ function httpRequestHandler(url,
             }, 3000);
         };
         xmlHttp.onreadystatechange = function () {
-            if (xmlHttp.readyState === XMLHttpRequest.DONE && xmlHttp.status === 200) {
+            if (xmlHttp.readyState === XMLHttpRequest.DONE
+                && xmlHttp.status === 200) {
                 asyncResponseObject.innerText = xmlHttp.responseText;
                 setTimeout(() => {
                     asyncResponseObject.innerText = "IDLE";
@@ -107,7 +109,8 @@ function httpRequestHandler(url,
     
     xmlHttp.open(method, url, asyncState);
     if (method === 'POST') {
-        xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlHttp.setRequestHeader("Content-Type",
+                                 "application/json;charset=UTF-8");
     }
     
     xmlHttp.send(JSON.stringify(body));
@@ -119,12 +122,15 @@ function httpRequestHandler(url,
 let ddownList = document.getElementById('selectSTL');
 let panelNameElement = document.getElementById("panelName");
 panelNameElement.innerHTML = "<b>Control Panel</b>";
-let flaskServerResponsePanelName = document.getElementById("flaskServerResponsePanelName");
+let flaskServerResponsePanelName = document
+    .getElementById("flaskServerResponsePanelName");
 flaskServerResponsePanelName.innerHTML = "<b>Status Panel</b>";
 
 let controlPanelForm = document.getElementById('controlPanel');
-let fileList = JSON.parse(httpRequestHandler(publicDirectoryUrl, null, 'GET'));
-let flaskServerResponsePanel = document.getElementById('flaskServerResponse');
+let fileList = JSON
+    .parse(httpRequestHandler(publicDirectoryUrl, null, 'GET'));
+let flaskServerResponsePanel = document
+    .getElementById('flaskServerResponse');
 
 // populate the drop down list
 for (let _file of fileList) {
