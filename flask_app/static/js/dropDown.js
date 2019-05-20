@@ -52,20 +52,39 @@ let createLighting = function () {
     scene.add(bottomLight);
 };
 
-//// gets the current STL file contents
-// this actually makes an ajax call
-function httpRequestHandler(url, body, method, asyncState = false, asyncResponseObject) {
+//// gets the current STL file contents and makes many other AJAX call
+function httpRequestHandler(url,
+                            body,
+                            method,
+                            asyncState = false,
+                            asyncResponseObject,
+                            buttonObject = []) {
     let xmlHttp = new XMLHttpRequest();
+    
+    function disableButtons() {
+        buttonObject.forEach((button) => {
+            button.disabled = true;
+        });
+    }
+    
+    function enableButtons() {
+        buttonObject.forEach((button) => {
+            button.disabled = false;
+        });
+    }
     
     if (asyncState) {
         // asyncState is only true when making request to post new
         // toolpath
+        disableButtons();
         asyncResponseObject.innerText = "Posting new toolpath...";
-        xmlHttp.timeout = 5 * 60 * 1000; // 5 min LCNC timeout
+        // then disable the buttons in the control panel
+        xmlHttp.timeout = 2 * 60 * 1000; // 5 min LCNC timeout
         xmlHttp.ontimeout = function () {
             asyncResponseObject.innerText = "LCNC Response Timed Out";
             setTimeout(() => {
                 asyncResponseObject.innerText = "IDLE";
+                enableButtons();
             }, 3000);
         };
         xmlHttp.onreadystatechange = function () {
@@ -73,12 +92,14 @@ function httpRequestHandler(url, body, method, asyncState = false, asyncResponse
                 asyncResponseObject.innerText = xmlHttp.responseText;
                 setTimeout(() => {
                     asyncResponseObject.innerText = "IDLE";
+                    enableButtons();
                 }, 5000);
             } else if (xmlHttp.status === 500) {
                 asyncResponseObject.innerText = "Internal server" +
                     " error occured";
                 setTimeout(() => {
                     asyncResponseObject.innerText = "IDLE";
+                    enableButtons();
                 }, 3000);
             }
         };
@@ -88,8 +109,10 @@ function httpRequestHandler(url, body, method, asyncState = false, asyncResponse
     if (method === 'POST') {
         xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     }
+    
     xmlHttp.send(JSON.stringify(body));
-    return xmlHttp.responseText;
+    return xmlHttp.responseText; // in case of async request, this
+    // line doesnt return anything, probably an unhandled promise
 }
 
 // stl file drop down list initialisations
@@ -228,9 +251,13 @@ ddownList.addEventListener('click', function () {
                 console.log("sending req to lcnc");
                 // g code generation takes long time. so
                 // making this ajax call asynchronous
+                
+                // we need to also send the buttons to disable
+                let buttonArray = [];
+                buttonArray.push(submitElement, submitElement2);
                 httpRequestHandler(
                     fusionFlaskServerLCNCUrl, null, 'GET',
-                    true, flaskServerResponsePanel);
+                    true, flaskServerResponsePanel, buttonArray);
             });
         });
     }

@@ -102,8 +102,7 @@ def send_gcode():
 
     except:
         if ui:
-            ui.messageBox(
-                'Failed:\n{}'.format(traceback.format_exc()))
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
 # event handler to handle parameter change command from 3JS
@@ -121,8 +120,8 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                 global_fusion_open_document_name
 
             if ui.activeCommand != 'SelectCommand':
-                ui.commandDefinitions.itemById(
-                    'SelectCommand').execute()
+                ui.commandDefinitions\
+                    .itemById('SelectCommand').execute()
 
             # change the workspace first and show the design ws
             ws = ui.workspaces.itemById('FusionSolidEnvironment')
