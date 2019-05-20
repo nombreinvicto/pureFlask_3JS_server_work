@@ -16,6 +16,7 @@ global_ngc_file_name = '1001'
 global_ngc_file_name_export = ''
 global_fusion_open_document_name = ''
 send_gcode_to_lcnc_flag = False
+ngrok_process_name = "ngrok.exe"
 unit_to_cm_factors = {
     'm': 100,
     'mm': 0.1,
@@ -26,11 +27,21 @@ unit_to_cm_factors = {
 
 try:
     from pureFlask_3JS_Server.flask_app \
-        import flask_app, cadMetaDataPath, flaskKwargs, \
-        flask_app_PORT, lcnc_upload_url
-    import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
+        import flask_app, \
+        cadMetaDataPath, \
+        flaskKwargs, \
+        flask_app_PORT, \
+        lcnc_upload_url
     from flask import request
-    import threading, json, requests, time, os, socket, webbrowser
+    import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
+    import threading, \
+        json, \
+        requests, \
+        time, \
+        os, \
+        socket, \
+        webbrowser, \
+        psutil
 
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -47,11 +58,15 @@ masked_local_host = "http://f360app.ngrok.io"
 
 
 # flask related things
-def shutdown_server():
+def shutdown_server_and_ngrok():
     shutdown_func = request.environ.get('werkzeug.server.shutdown')
     if shutdown_func is None:
         raise RuntimeError
     shutdown_func()
+
+    for procs in psutil.process_iter():
+        if ngrok_process_name == procs.name():
+            procs.kill()
 
 
 @flask_app.route('/fusion360', methods=['POST'])
@@ -72,7 +87,7 @@ def fusion360():
 
 @flask_app.route('/shutdown', methods=['POST'])
 def stop_server():
-    shutdown_server()
+    shutdown_server_and_ngrok()
     return "shutting down server"
 
 
