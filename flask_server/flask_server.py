@@ -17,6 +17,13 @@ global_ngc_file_name = '1001'
 global_ngc_file_name_export = ''
 global_fusion_open_document_name = ''
 send_gcode_to_lcnc_flag = False
+unit_to_cm_factors = {
+    'm': 100,
+    'mm': 0.1,
+    'in': 2.54,
+    'ft': 30.48,
+    'cm': 1
+}
 
 try:
     from pureFlask_3JS_Server.flask_app \
@@ -102,7 +109,8 @@ def send_gcode():
 
     except:
         if ui:
-            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+            ui.messageBox(
+                'Failed:\n{}'.format(traceback.format_exc()))
 
 
 # event handler to handle parameter change command from 3JS
@@ -120,7 +128,7 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                 global_fusion_open_document_name
 
             if ui.activeCommand != 'SelectCommand':
-                ui.commandDefinitions\
+                ui.commandDefinitions \
                     .itemById('SelectCommand').execute()
 
             # change the workspace first and show the design ws
@@ -135,6 +143,8 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
 
             eventArgs = json.loads(args.additionalInfo)
             design = adsk.fusion.Design.cast(designProduct)
+            unitsMgr = design.unitsManager
+            defaultUnits = unitsMgr.defaultLengthUnits
             rootComp = design.rootComponent
             fileName = None
             outJsonMetaData = {}
@@ -162,7 +172,8 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                             "Parameter change attempt failed"
                         flaskServerReplyBit = True
                         return
-                    param.value = newValue
+                    param.value = newValue * \
+                                  unit_to_cm_factors.get(defaultUnits)
                     adsk.doEvents()
                 else:
                     fileName = val
