@@ -54,7 +54,7 @@ let createLighting = function () {
     scene.add(bottomLight);
 };
 
-//// gets the current STL file contents and makes many other AJAX call
+//// makes AJAX calls
 function httpRequestHandler(url,
                             body,
                             method,
