@@ -12,7 +12,6 @@ server_thread = None
 server_process = None
 app_run_tracker = False
 flask_server_to_3js_reply = None
-localhost = "http://192.168.0.10:6923"
 global_ngc_file_name = '1001'
 global_ngc_file_name_export = ''
 global_fusion_open_document_name = ''
@@ -31,7 +30,7 @@ try:
         flask_app_PORT, lcnc_upload_url
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     from flask import request
-    import threading, json, requests, time, os
+    import threading, json, requests, time, os, socket
 
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -39,8 +38,11 @@ except:
     if ui:
         ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
+# import dependant global variables
 global_output_folder = os.path.dirname(
     os.path.dirname(__file__)) + r'/flask_app/stl'
+local_ip_addr = socket.gethostbyname(socket.gethostname())
+localhost = "http://" + local_ip_addr + ":" + str(flask_app_PORT)
 
 
 # flask related things
@@ -310,8 +312,8 @@ class FlaskThreeJSButtonPressedHandler(
                 server_thread.setDaemon(True)
                 server_thread.start()
                 app_run_tracker = not app_run_tracker
-                ui.messageBox('FusionThreeJS Server started at: ' +
-                              str(flask_app_PORT))
+                ui.messageBox('FusionThreeJS Server started at -> ' +
+                              localhost)
             else:
                 # stop the server on second press
                 go_stop_server()
