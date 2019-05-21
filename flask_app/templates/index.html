@@ -16,6 +16,14 @@
             </button>
         </span>
         <span id="f360DocOpen"></span>
+        <span>
+            <button type="button"
+                    id="renderChart">Plot LCNC Coordinates</button>
+        </span>
+        <span>
+            <button type="button"
+                    id="refreshPlotly">Refresh Plot</button>
+        </span>
     </div>
 
     <p></p>
@@ -32,7 +40,8 @@
 {% endblock %}
 
 {% block js %}
-    <script src="../static/js/dropDownOut.js"></script>
+    {#    <script src="../static/js/dropDownOut.js"></script>#}
+    <script src="../static/js/dist/bundle.js"></script>
 {% endblock %}
 
 {% block css %}

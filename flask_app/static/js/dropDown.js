@@ -1,5 +1,6 @@
 //// importing the required libraries
 let THREE = require("./OrbitControls");
+let {plotly, init_data, layout} = require("./plotlyUtil");
 
 // set up all links for AJAX requests
 //let localhost = "http://192.168.0.10:6923";
@@ -9,6 +10,7 @@ const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
+let lcnc_status_url = "http://192.168.0.11:3296/lcn_xyz_status";
 
 //// 3.js initialisations
 // camera, scene init
@@ -23,7 +25,8 @@ camera.position.z = 1000;
 renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth * (3 / 4),
                  window.innerHeight * (3 / 4));
-document.getElementById('renderOutput').appendChild(renderer.domElement);
+let renderOutputElement = document.getElementById("renderOutput");
+renderOutputElement.appendChild(renderer.domElement);
 
 // OrbitalControl init
 let controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -144,6 +147,41 @@ refreshF360DocButton.addEventListener('click', () => {
 });
 refreshF360DocButton.click();
 
+// setting up the plotly tasks and elements
+let lcnc_plot_allow_flag = false;
+let plotlyChartButton = document.getElementById("renderChart");
+plotlyChartButton.addEventListener("click", () => {
+    renderOutputElement.innerHTML = "";
+    plotly.newPlot("renderOutput", init_data, layout);
+    lcnc_plot_allow_flag = true;
+    
+});
+
+// periodically request xyz data from LCNC and then update plot
+setInterval(function () {
+    let responseObject =
+        httpRequestHandler(lcnc_status_url, null, "GET");
+    let responseJSON = JSON.parse(responseObject);
+    // needs to handle error here when lcnc is off
+    
+    if (parseInt(responseJSON["motion_status"]) !== 2 && lcnc_plot_allow_flag) {
+        plotly.extendTraces("renderOutput", {
+            x: [[parseFloat(responseJSON["x"])]],
+            y: [[parseFloat(responseJSON["y"])]],
+            z: [[parseFloat(responseJSON["z"])]]
+        }, [0]);
+    }
+}, 100);
+
+function refresh_lcnc_plots() {
+    plotly.newPlot("renderOutput", init_data, layout);
+}
+
+let plotRefreshButton = document.getElementById("refreshPlotly");
+plotRefreshButton.addEventListener("click", () => {
+    refresh_lcnc_plots();
+});
+
 // populate the drop down list
 for (let _file of fileList) {
     // populate with only stl files
@@ -158,6 +196,8 @@ for (let _file of fileList) {
 let stlLoader = new THREE.STLLoader();
 let clickCounter = 0;
 ddownList.addEventListener('click', function () {
+    renderOutputElement.innerHTML = "";
+    renderOutputElement.appendChild(renderer.domElement);
     clickCounter++;
     // using clickcounter to stop reload on first drop down roll down
     if (ddownList.value !== "0" && clickCounter > 1) {

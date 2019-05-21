@@ -13,7 +13,7 @@ flaskKwargs = {'debug': False, 'host': '0.0.0.0', 'port': flask_app_PORT}
 
 @flask_app.route('/')
 def get_home_page():
-    return render_template('index.html', title='Fusion-Flask 3JS Server')
+    return render_template('index.html', title='Fusion 3JS Server')
 
 
 @flask_app.route('/public')

@@ -29,6 +29,7 @@ img {
 
 #renderOutput {
     margin: auto;
+    border: 5px solid lightseagreen;
     width: 80%;
 }
 
