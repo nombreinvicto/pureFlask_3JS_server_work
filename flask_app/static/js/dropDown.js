@@ -148,39 +148,45 @@ refreshF360DocButton.addEventListener('click', () => {
 refreshF360DocButton.click();
 
 // setting up the plotly tasks and elements
-let lcnc_plot_allow_flag = false;
+let SetIntervalId = '';
+let plotlyChartToggleState = false;
 let plotlyChartButton = document.getElementById("renderChart");
 plotlyChartButton.addEventListener("click", () => {
-    renderOutputElement.innerHTML = "";
-    plotly.newPlot("renderOutput", init_data, layout);
-    lcnc_plot_allow_flag = true;
-    
+    if (!plotlyChartToggleState) {
+        renderOutputElement.innerHTML = "";
+        plotly.newPlot("renderOutput", init_data, layout);
+        updatePlotlyChart();
+    } else {
+        stopStreamingDataToChart();
+    }
+    plotlyChartToggleState = !plotlyChartToggleState;
 });
 
 // periodically request xyz data from LCNC and then update plot
-setInterval(function () {
-    let responseObject =
-        httpRequestHandler(lcnc_status_url, null, "GET");
-    let responseJSON = JSON.parse(responseObject);
-    // needs to handle error here when lcnc is off
+function updatePlotlyChart() {
+    SetIntervalId = setInterval(function () {
+        let responseObject =
+            httpRequestHandler(lcnc_status_url, null, "GET");
+        console.log("Plotly LCNC reply: ");
+        console.log(responseObject);
+        let responseJSON = JSON.parse(responseObject);
+        // needs to handle error here when lcnc is off
+        
+        if (parseInt(responseJSON["motion_status"]) !== 2) {
+            plotly.extendTraces("renderOutput", {
+                x: [[parseFloat(responseJSON["x"])]],
+                y: [[parseFloat(responseJSON["y"])]],
+                z: [[parseFloat(responseJSON["z"])]]
+            }, [0]);
+        }
+    }, 100);
     
-    if (parseInt(responseJSON["motion_status"]) !== 2 && lcnc_plot_allow_flag) {
-        plotly.extendTraces("renderOutput", {
-            x: [[parseFloat(responseJSON["x"])]],
-            y: [[parseFloat(responseJSON["y"])]],
-            z: [[parseFloat(responseJSON["z"])]]
-        }, [0]);
-    }
-}, 100);
-
-function refresh_lcnc_plots() {
-    plotly.newPlot("renderOutput", init_data, layout);
 }
 
-let plotRefreshButton = document.getElementById("refreshPlotly");
-plotRefreshButton.addEventListener("click", () => {
-    refresh_lcnc_plots();
-});
+// stop streaming data to plotly chart from LCNC
+function stopStreamingDataToChart() {
+    clearInterval(SetIntervalId);
+}
 
 // populate the drop down list
 for (let _file of fileList) {
