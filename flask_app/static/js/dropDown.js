@@ -63,7 +63,8 @@ function httpRequestHandler(url,
                             method,
                             asyncState = false,
                             asyncResponseObject,
-                            buttonObject = []) {
+                            buttonObject = [],
+                            asyncPlotFlag = false) {
     let xmlHttp = new XMLHttpRequest();
     
     function disableButtons() {
@@ -78,7 +79,7 @@ function httpRequestHandler(url,
         });
     }
     
-    if (asyncState) {
+    if (asyncState && !asyncPlotFlag) {
         // asyncState is only true when making request to post new
         // toolpath
         disableButtons();
@@ -107,6 +108,29 @@ function httpRequestHandler(url,
                     asyncResponseObject.innerText = "IDLE";
                     enableButtons();
                 }, 3000);
+            }
+        };
+    } else if (asyncState && asyncPlotFlag) {
+        xmlHttp.timeout = 0.5 * 60 * 1000;
+        xmlHttp.ontimeout = () => {
+            // do nothing
+            console.log("plot update from LCNC timed out");
+        };
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState === XMLHttpRequest.DONE
+                && xmlHttp.status === 200) {
+                let responseJSON = JSON.parse(xmlHttp.responseText);
+                console.log("Reply from LCNC for plotly: ");
+                console.log(responseJSON);
+                if (parseInt(responseJSON["motion_status"]) !== 2) {
+                    plotly.extendTraces("renderOutput", {
+                        x: [[parseFloat(responseJSON["x"])]],
+                        y: [[parseFloat(responseJSON["y"])]],
+                        z: [[parseFloat(responseJSON["z"])]]
+                    }, [0]);
+                }
+            } else if (xmlHttp.status === 500) {
+                console.log("Internal server error for plotly");
             }
         };
     }
@@ -154,8 +178,12 @@ let plotlyChartButton = document.getElementById("renderChart");
 plotlyChartButton.addEventListener("click", () => {
     if (!plotlyChartToggleState) {
         renderOutputElement.innerHTML = "";
-        plotly.newPlot("renderOutput", init_data, layout);
-        updatePlotlyChart();
+        plotly.newPlot("renderOutput", init_data, layout).then((res) => {
+            updatePlotlyChart();
+        }).catch((err) => {
+            console.log("Could not update plotly chart");
+            console.log(err);
+        });
     } else {
         stopStreamingDataToChart();
     }
@@ -165,20 +193,9 @@ plotlyChartButton.addEventListener("click", () => {
 // periodically request xyz data from LCNC and then update plot
 function updatePlotlyChart() {
     SetIntervalId = setInterval(function () {
-        let responseObject =
-            httpRequestHandler(lcnc_status_url, null, "GET");
-        console.log("Plotly LCNC reply: ");
-        console.log(responseObject);
-        let responseJSON = JSON.parse(responseObject);
-        // needs to handle error here when lcnc is off
-        
-        if (parseInt(responseJSON["motion_status"]) !== 2) {
-            plotly.extendTraces("renderOutput", {
-                x: [[parseFloat(responseJSON["x"])]],
-                y: [[parseFloat(responseJSON["y"])]],
-                z: [[parseFloat(responseJSON["z"])]]
-            }, [0]);
-        }
+        httpRequestHandler(lcnc_status_url, null, "GET",
+                           true, null,
+                           null, true);
     }, 100);
     
 }
@@ -187,6 +204,12 @@ function updatePlotlyChart() {
 function stopStreamingDataToChart() {
     clearInterval(SetIntervalId);
 }
+
+// Plotly refresh tasks
+let refreshPlotlyButton = document.getElementById("refreshPlotly");
+refreshPlotlyButton.addEventListener("click", () => {
+    plotly.newPlot("renderOutput", [], layout);
+});
 
 // populate the drop down list
 for (let _file of fileList) {
