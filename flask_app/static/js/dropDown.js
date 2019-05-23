@@ -11,6 +11,8 @@ let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
 let lcnc_status_url = "http://192.168.0.11:3296/lcn_xyz_status";
+let setIntervalObject = "";
+let dataStreamFlag = true;
 
 //// 3.js initialisations
 // camera, scene init
@@ -57,7 +59,7 @@ let createLighting = function () {
     scene.add(bottomLight);
 };
 
-//// makes AJAX calls
+// makes AJAX calls
 function httpRequestHandler(url,
                             body,
                             method,
@@ -81,35 +83,62 @@ function httpRequestHandler(url,
     
     if (asyncState) {
         // asyncState is only true when making request to post new
-        // toolpath
-        disableButtons();
-        asyncResponseObject.innerText = "Posting new toolpath...";
-        // then disable the buttons in the control panel
-        xmlHttp.timeout = 2 * 60 * 1000; // 5 min LCNC timeout
-        xmlHttp.ontimeout = function () {
-            asyncResponseObject.innerText = "LCNC Response Timed Out";
-            setTimeout(() => {
-                asyncResponseObject.innerText = "IDLE";
-                enableButtons();
-            }, 3000);
-        };
-        xmlHttp.onreadystatechange = function () {
-            if (xmlHttp.readyState === XMLHttpRequest.DONE
-                && xmlHttp.status === 200) {
-                asyncResponseObject.innerText = xmlHttp.responseText;
-                setTimeout(() => {
-                    asyncResponseObject.innerText = "IDLE";
-                    enableButtons();
-                }, 5000);
-            } else if (xmlHttp.status === 500) {
-                asyncResponseObject.innerText = "Internal server" +
-                    " error occured";
+        // toolpath or when making calls to lcnc status
+        
+        if (!asyncPlotFlag) {
+            disableButtons();
+            asyncResponseObject.innerText = "Posting new toolpath...";
+            // then disable the buttons in the control panel
+            xmlHttp.timeout = 2 * 60 * 1000; // 5 min LCNC timeout
+            xmlHttp.ontimeout = function () {
+                asyncResponseObject.innerText = "LCNC Response Timed Out";
                 setTimeout(() => {
                     asyncResponseObject.innerText = "IDLE";
                     enableButtons();
                 }, 3000);
-            }
-        };
+            };
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === XMLHttpRequest.DONE
+                    && xmlHttp.status === 200) {
+                    asyncResponseObject.innerText = xmlHttp.responseText;
+                    setTimeout(() => {
+                        asyncResponseObject.innerText = "IDLE";
+                        enableButtons();
+                    }, 5000);
+                } else if (xmlHttp.status === 500) {
+                    asyncResponseObject.innerText = "Internal server" +
+                        " error occured";
+                    setTimeout(() => {
+                        asyncResponseObject.innerText = "IDLE";
+                        enableButtons();
+                    }, 3000);
+                }
+            };
+        } else {
+            // make calls to lcnc status
+            xmlHttp.timeout = 0.5 * 60 * 1000;
+            xmlHttp.ontimeout = () => {
+                // do nothing
+                console.log("plot update from LCNC timed out");
+            };
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === XMLHttpRequest.DONE
+                    && xmlHttp.status === 200) {
+                    let responseJSON = JSON.parse(xmlHttp.responseText);
+                    console.log("Reply from LCNC for plotly: ");
+                    console.log(responseJSON);
+                    if (parseInt(responseJSON["motion_status"]) !== 2) {
+                        plotly.extendTraces("renderOutput", {
+                            x: [[parseFloat(responseJSON["x"])]],
+                            y: [[parseFloat(responseJSON["y"])]],
+                            z: [[parseFloat(responseJSON["z"])]]
+                        }, [0]);
+                    }
+                } else if (xmlHttp.status === 500) {
+                    console.log("Internal server error for plotly");
+                }
+            };
+        }
     }
     
     xmlHttp.open(method, url, asyncState);
@@ -159,9 +188,6 @@ for (let _file of fileList) {
 }
 
 // all plotly tasks//////////////////////////////////////////////////
-let setIntervalObject = "";
-let dataStreamFlag = true;
-
 // get all the buttons and elements
 let renderOutput = document.getElementById("renderOutput");
 let initiatePlotButton = document.getElementById("togglePlot");
@@ -169,15 +195,13 @@ let toggleDataStreamButton = document.getElementById("toggleDataStream");
 
 // attach listeners to buttons
 initiatePlotButton.addEventListener("click", () => {
-    
     renderOutput.innerHTML = "";
     renderPlot();
-    
 });
 
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
-        extendTrace();
+        updatePlotlyChart();
     } else {
         clearInterval(setIntervalObject);
     }
@@ -228,6 +252,17 @@ function extendTrace() {
     
 }
 
+// periodically request xyz data from LCNC and then update plot
+function updatePlotlyChart() {
+    setIntervalObject = setInterval(function () {
+        httpRequestHandler(lcnc_status_url, null, "GET",
+                           true, null,
+                           null, true);
+    }, 500);
+    
+}
+
+//////////////////////////////////////////////////////////////////////
 //// initialising stl loader
 let stlLoader = new THREE.STLLoader();
 let clickCounter = 0;
@@ -235,7 +270,8 @@ ddownList.addEventListener('click', function () {
     renderOutput.innerHTML = "";
     renderOutput.appendChild(renderer.domElement);
     clickCounter++;
-    // using clickcounter to stop reload on first drop down roll down
+    // using clickcounter to stop reload on first drop down roll
+    // down
     if (ddownList.value !== "0" && clickCounter > 1) {
         // option value defaults to option text if not specified
         clickCounter = 0;
@@ -257,7 +293,8 @@ ddownList.addEventListener('click', function () {
             // first make sure the form element is empty
             controlPanelForm.innerHTML = "";
             
-            // parse the stl json meta data to populate controls panel
+            // parse the stl json meta data to populate controls
+            // panel
             let cadMetaData = httpRequestHandler(cadMetaDataUrl + ddownList.value, null, 'GET');
             const cadJsonMetaData = JSON.parse(cadMetaData);
             
@@ -295,8 +332,9 @@ ddownList.addEventListener('click', function () {
                 parElem2.append(rangeControlElement, spanElement);
                 controlPanelForm.append(parElem1, parElem2);
                 
-                // connect rangeControlElement to onchange listeners
-                // for display change on the numeric outputs
+                // connect rangeControlElement to onchange
+                // listeners for display change on the numeric
+                // outputs
                 rangeControlElement.addEventListener('change', () => {
                     // get the corresponding span element
                     let spanElement = document.getElementById('spanFor' + dim);
@@ -306,8 +344,8 @@ ddownList.addEventListener('click', function () {
             let submitElement = document.createElement('button');
             submitElement.type = "button";
             submitElement.innerText = "Update CAD";
-            // attach an event listener to the submit button = Update
-            // CAD
+            // attach an event listener to the submit button =
+            // Update CAD
             submitElement.addEventListener('click', () => {
                 
                 let allInputs = document.querySelectorAll('input');
@@ -327,10 +365,10 @@ ddownList.addEventListener('click', function () {
                 setTimeout(() => {
                     flaskServerResponsePanel.innerText = "IDLE";
                 }, 3000);
-                clickCounter = 2; // make the counter >1 so that stl
-                                  // reloads
-                ddownList.click(); // fire a click event on the ddwon
-                                   // list
+                clickCounter = 2; // make the counter >1 so that
+                                  // stl reloads
+                ddownList.click(); // fire a click event on the
+                                   // ddwon list
             });
             controlPanelForm.appendChild(submitElement);
             
