@@ -13,6 +13,7 @@ let currentF360DocUrl = localhost + "/currentOpenDoc";
 let lcnc_status_url = "http://192.168.0.11:3296/lcn_xyz_status";
 let setIntervalObject = "";
 let dataStreamFlag = true;
+let lcncStatusSpan = document.getElementById("lcncStatus");
 
 //// 3.js initialisations
 // camera, scene init
@@ -127,6 +128,12 @@ function httpRequestHandler(url,
                     let responseJSON = JSON.parse(xmlHttp.responseText);
                     console.log("Reply from LCNC for plotly: ");
                     console.log(responseJSON);
+                    if (responseJSON["error"]) {
+                        lcncStatusSpan.innerText = responseJSON["error"];
+                        return;
+                    } else {
+                        lcncStatusSpan.innerText = responseJSON["motion_status_name"];
+                    }
                     if (parseInt(responseJSON["motion_status"]) !== 2) {
                         plotly.extendTraces("renderOutput", {
                             x: [[parseFloat(responseJSON["x"])]],
