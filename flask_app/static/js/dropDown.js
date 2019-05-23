@@ -1,6 +1,6 @@
 //// importing the required libraries
 let THREE = require("./OrbitControls");
-let {plotly, init_data, layout} = require("./plotlyUtil");
+let plotly = require("plotly.js");
 
 // set up all links for AJAX requests
 //let localhost = "http://192.168.0.10:6923";
@@ -79,7 +79,7 @@ function httpRequestHandler(url,
         });
     }
     
-    if (asyncState && !asyncPlotFlag) {
+    if (asyncState) {
         // asyncState is only true when making request to post new
         // toolpath
         disableButtons();
@@ -108,29 +108,6 @@ function httpRequestHandler(url,
                     asyncResponseObject.innerText = "IDLE";
                     enableButtons();
                 }, 3000);
-            }
-        };
-    } else if (asyncState && asyncPlotFlag) {
-        xmlHttp.timeout = 0.5 * 60 * 1000;
-        xmlHttp.ontimeout = () => {
-            // do nothing
-            console.log("plot update from LCNC timed out");
-        };
-        xmlHttp.onreadystatechange = function () {
-            if (xmlHttp.readyState === XMLHttpRequest.DONE
-                && xmlHttp.status === 200) {
-                let responseJSON = JSON.parse(xmlHttp.responseText);
-                console.log("Reply from LCNC for plotly: ");
-                console.log(responseJSON);
-                if (parseInt(responseJSON["motion_status"]) !== 2) {
-                    plotly.extendTraces("renderOutput", {
-                        x: [[parseFloat(responseJSON["x"])]],
-                        y: [[parseFloat(responseJSON["y"])]],
-                        z: [[parseFloat(responseJSON["z"])]]
-                    }, [0]);
-                }
-            } else if (xmlHttp.status === 500) {
-                console.log("Internal server error for plotly");
             }
         };
     }
@@ -171,46 +148,6 @@ refreshF360DocButton.addEventListener('click', () => {
 });
 refreshF360DocButton.click();
 
-// setting up the plotly tasks and elements
-let SetIntervalId = '';
-let plotlyChartToggleState = false;
-let plotlyChartButton = document.getElementById("renderChart");
-plotlyChartButton.addEventListener("click", () => {
-    if (!plotlyChartToggleState) {
-        renderOutputElement.innerHTML = "";
-        plotly.newPlot("renderOutput", init_data, layout).then((res) => {
-            updatePlotlyChart();
-        }).catch((err) => {
-            console.log("Could not update plotly chart");
-            console.log(err);
-        });
-    } else {
-        stopStreamingDataToChart();
-    }
-    plotlyChartToggleState = !plotlyChartToggleState;
-});
-
-// periodically request xyz data from LCNC and then update plot
-function updatePlotlyChart() {
-    SetIntervalId = setInterval(function () {
-        httpRequestHandler(lcnc_status_url, null, "GET",
-                           true, null,
-                           null, true);
-    }, 100);
-    
-}
-
-// stop streaming data to plotly chart from LCNC
-function stopStreamingDataToChart() {
-    clearInterval(SetIntervalId);
-}
-
-// Plotly refresh tasks
-let refreshPlotlyButton = document.getElementById("refreshPlotly");
-refreshPlotlyButton.addEventListener("click", () => {
-    plotly.newPlot("renderOutput", [], layout);
-});
-
 // populate the drop down list
 for (let _file of fileList) {
     // populate with only stl files
@@ -221,12 +158,82 @@ for (let _file of fileList) {
     }
 }
 
+// all plotly tasks//////////////////////////////////////////////////
+let setIntervalObject = "";
+let dataStreamFlag = true;
+
+// get all the buttons and elements
+let renderOutput = document.getElementById("renderOutput");
+let initiatePlotButton = document.getElementById("togglePlot");
+let toggleDataStreamButton = document.getElementById("toggleDataStream");
+
+// attach listeners to buttons
+initiatePlotButton.addEventListener("click", () => {
+    
+    renderOutput.innerHTML = "";
+    renderPlot();
+    
+});
+
+toggleDataStreamButton.addEventListener("click", () => {
+    if (dataStreamFlag) {
+        extendTrace();
+    } else {
+        clearInterval(setIntervalObject);
+    }
+    dataStreamFlag = !dataStreamFlag;
+});
+
+function renderPlot() {
+    
+    let init_data = [{
+        x: [0],
+        y: [0],
+        z: [0],
+        mode: 'markers',
+        marker: {
+            size: 5,
+            line: {
+                color: 'rgba(0, 0, 255, 1)',
+                width: 0.5
+            },
+            opacity: 0.8
+        },
+        type: 'scatter3d'
+    }];
+    
+    let layout = {
+        margin: {
+            l: 1,
+            r: 1,
+            b: 1,
+            t: 1
+        }
+    };
+    plotly.newPlot("renderOutput", init_data, layout);
+}
+
+function extendTrace() {
+    setIntervalObject = setInterval(() => {
+        
+        plotly.extendTraces("renderOutput", {
+            x: [[Math.random() * 10]],
+            y: [[Math.random() * 10]],
+            z: [[Math.random() * 10]]
+        }, [0]).then((res) => {
+            console.log("extended trace: ");
+            console.log(res);
+        });
+    }, 1000);
+    
+}
+
 //// initialising stl loader
 let stlLoader = new THREE.STLLoader();
 let clickCounter = 0;
 ddownList.addEventListener('click', function () {
-    renderOutputElement.innerHTML = "";
-    renderOutputElement.appendChild(renderer.domElement);
+    renderOutput.innerHTML = "";
+    renderOutput.appendChild(renderer.domElement);
     clickCounter++;
     // using clickcounter to stop reload on first drop down roll down
     if (ddownList.value !== "0" && clickCounter > 1) {

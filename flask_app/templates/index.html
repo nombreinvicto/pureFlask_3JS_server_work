@@ -16,19 +16,29 @@
             </button>
         </span>
         <span id="f360DocOpen"></span>
+
         <span>
             <button type="button"
-                    id="renderChart">Toggle LCNC Plot</button>
+                    id="togglePlot">Refresh Plot
+            </button>
         </span>
+
         <span>
             <button type="button"
-                    id="refreshPlotly">Refresh Plot</button>
+                    id="toggleDataStream">Toggle Data Stream
+            </button>
         </span>
+
+        <span> LCNC STATUS: </span>
+        <span id="lcncStatus"></span>
+
     </div>
 
     <p></p>
-    <div id="renderOutput">
-    </div>
+
+    <div id="renderOutput"></div>
+
+
     <br>
     <div id='parent_div'>
         <div id="panelName"></div>
@@ -41,7 +51,8 @@
 
 {% block js %}
     {#    <script src="../static/js/dropDownOut.js"></script>#}
-    <script src="../static/js/dist/bundle.js"></script>
+    <script src="../static/js/dist/bundle.js"
+            type="text/javascript"></script>
 {% endblock %}
 
 {% block css %}

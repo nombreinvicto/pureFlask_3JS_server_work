@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block body %}
+    <img src="../static/jpegs/topBanner.jpg" alt="">
+    <p></p>
+    <div id="selectTab">
+        <p id="modelSelectionPanel">LinuxCNC Status Panel</p>
+        <span>
+            <button type="button"
+                    id="togglePlot">Refresh Plot
+            </button>
+        </span>
+        <span>
+            <button type="button"
+                    id="toggleDataStream">Toggle Data Stream
+            </button>
+        </span>
+        <span id="lcncStatus"></span>
+    </div>
+
+    <div id="renderOutput"></div>
+
+    <br>
+{% endblock %}
+
+{% block js %}
+    <script src="../static/js/dist/plotlyOut.js"
+            type="text/javascript"></script>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="../static/css/style.css">
+{% endblock %}

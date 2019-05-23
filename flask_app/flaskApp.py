@@ -8,7 +8,8 @@ flask_app = Flask(__name__)
 CORS(flask_app)
 flask_app_PORT = 6923
 flask_app.jinja_env.globals['timestamp'] = int(time.time())
-flaskKwargs = {'debug': False, 'host': '0.0.0.0', 'port': flask_app_PORT}
+flaskKwargs = {'debug': False, 'host': '0.0.0.0',
+               'port': flask_app_PORT}
 
 
 @flask_app.route('/')
@@ -34,7 +35,8 @@ def get_cad_meta_data(file_name):
     min_max_jsonFileName = file_name[0:-4] + '_min_max' + '.json'
     value_jsonFileName = file_name[0:-4] + '_value' + '.json'
 
-    with open(cadMetaDataPath + '\\' + min_max_jsonFileName, 'r') as f1:
+    with open(cadMetaDataPath + '\\' + min_max_jsonFileName,
+              'r') as f1:
         c1 = f1.read()
         j1 = json.loads(c1)
 
@@ -46,3 +48,6 @@ def get_cad_meta_data(file_name):
         j1[key]["currentValue"] = val
 
     return json.dumps(j1)
+
+
+
