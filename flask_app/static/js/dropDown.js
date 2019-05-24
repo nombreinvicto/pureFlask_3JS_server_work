@@ -209,6 +209,7 @@ initiatePlotButton.addEventListener("click", () => {
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
         updatePlotlyChart();
+        //extendTrace();
     } else {
         clearInterval(setIntervalObject);
     }
@@ -216,7 +217,6 @@ toggleDataStreamButton.addEventListener("click", () => {
 });
 
 function renderPlot() {
-    
     let init_data = [{
         x: [0],
         y: [0],
@@ -244,6 +244,7 @@ function renderPlot() {
     plotly.newPlot("renderOutput", init_data, layout);
 }
 
+// this is for experimental update for the chart
 function extendTrace() {
     setIntervalObject = setInterval(() => {
         
@@ -265,7 +266,7 @@ function updatePlotlyChart() {
         httpRequestHandler(lcnc_status_url, null, "GET",
                            true, null,
                            null, true);
-    }, 500);
+    }, 100);
     
 }
 
@@ -300,8 +301,7 @@ ddownList.addEventListener('click', function () {
             // first make sure the form element is empty
             controlPanelForm.innerHTML = "";
             
-            // parse the stl json meta data to populate controls
-            // panel
+            // parse the stl json meta data to populate controls panel
             let cadMetaData = httpRequestHandler(cadMetaDataUrl + ddownList.value, null, 'GET');
             const cadJsonMetaData = JSON.parse(cadMetaData);
             
