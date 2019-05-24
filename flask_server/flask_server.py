@@ -120,7 +120,15 @@ def send_gcode():
         os.rename(src, dst)
 
         # now open the renamed file and export it to LCNC
-        with open(os.path.join(dst), 'r') as file:
+        # with open(os.path.join(dst), 'r') as file:
+        #     files = {'file': file}
+        #     r = requests.post(lcnc_upload_url, files=files)
+        #     return r.text  # reply to be sent back to 3js
+
+
+        # edit for direct hardware test
+        with open(os.path.join(global_output_folder,
+                               'pocket.ngc'), 'r') as file:
             files = {'file': file}
             r = requests.post(lcnc_upload_url, files=files)
             return r.text  # reply to be sent back to 3js
