@@ -124,9 +124,7 @@ def send_gcode():
         #     files = {'file': file}
         #     r = requests.post(lcnc_upload_url, files=files)
         #     return r.text  # reply to be sent back to 3js
-
-
-        # edit for direct hardware test
+        # edit for trial with pocketnc
         with open(os.path.join(global_output_folder,
                                'pocket.ngc'), 'r') as file:
             files = {'file': file}
