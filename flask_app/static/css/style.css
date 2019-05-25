@@ -26,6 +26,21 @@ img {
     width: 80%;
 }
 
+button {
+    width: 100%;
+    height: 50px;
+    transition-duration: 0.4s;
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    cursor: pointer;
+}
+
+button:hover {
+    box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+    background-color: cornflowerblue;
+    color: white;
+
+}
+
 
 #renderOutput {
     margin: auto;
@@ -82,4 +97,26 @@ canvas {
 
 span {
     padding: 10px;
+}
+
+.greenDisplay {
+    color: green;
+    font-weight: bold;
+}
+
+.redDisplay {
+    color: red;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+}
+
+td {
+    align-content: center;
+}
+
+.submitButton {
+    width: 150px;
 }

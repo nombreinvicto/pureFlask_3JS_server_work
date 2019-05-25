@@ -12,9 +12,6 @@ let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
 let lcnc_status_url = "http://192.168.0.11:3296/lcn_xyz_status";
 // let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
-let setIntervalObject = "";
-let dataStreamFlag = true;
-let lcncStatusSpan = document.getElementById("lcncStatus");
 
 //// 3.js initialisations
 // camera, scene init
@@ -70,19 +67,16 @@ function httpRequestHandler(url,
                             buttonObject = [],
                             asyncPlotFlag = false) {
     let xmlHttp = new XMLHttpRequest();
-    
     function disableButtons() {
         buttonObject.forEach((button) => {
             button.disabled = true;
         });
     }
-    
     function enableButtons() {
         buttonObject.forEach((button) => {
             button.disabled = false;
         });
     }
-    
     if (asyncState) {
         // asyncState is only true when making request to post new
         // toolpath or when making calls to lcnc status
@@ -197,27 +191,53 @@ for (let _file of fileList) {
 
 // all plotly tasks//////////////////////////////////////////////////
 // get all the buttons and elements
+let setIntervalObject = "";
 let renderOutput = document.getElementById("renderOutput");
-let initiatePlotButton = document.getElementById("togglePlot");
+
+let togglePlotButton = document.getElementById("togglePlot");
+let togglePlotFlag = true;
+let firsPlotFlag = true;
+let refreshPlotButton = document.getElementById("refreshPlot");
 let toggleDataStreamButton = document.getElementById("toggleDataStream");
+let dataStreamFlag = true;
+let globalDataTrace = "";
+let globalPlotlyLayout = "";
+
+let lcncStatusSpan = document.getElementById("lcncStatus");
+let toggleDataStateSpan = document.getElementById("toggleDataStateDisplay");
 
 // attach listeners to buttons
-initiatePlotButton.addEventListener("click", () => {
-    renderOutput.innerHTML = "";
-    renderPlot();
+togglePlotButton.addEventListener("click", () => {
+    if (togglePlotFlag && firsPlotFlag) {
+        renderNewPlot();
+        firsPlotFlag = !firsPlotFlag;
+    } else if (togglePlotFlag && !firsPlotFlag) {
+        // if togglePlotFlag is true, but not firstPlot means render
+        // previously running data trace of plotly
+        renderPreviousPlot();
+    } else {
+        // if togglePlotflag is false means render 3JS DOM
+        renderThreeJSDOM();
+    }
+    togglePlotFlag = !togglePlotFlag;
+});
+
+refreshPlotButton.addEventListener("click", () => {
+    stopUpdatePlotlyChart();
+    renderNewPlot();
 });
 
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
         updatePlotlyChart();
-        //extendTrace();
     } else {
-        clearInterval(setIntervalObject);
+        stopUpdatePlotlyChart();
     }
     dataStreamFlag = !dataStreamFlag;
 });
 
-function renderPlot() {
+function renderNewPlot() {
+    renderOutput.innerHTML = "";
     let init_data = [{
         x: [0],
         y: [0],
@@ -242,7 +262,15 @@ function renderPlot() {
             t: 1
         }
     };
+    globalDataTrace = init_data;
+    globalPlotlyLayout = layout;
     plotly.newPlot("renderOutput", init_data, layout);
+}
+
+// render previous plot
+function renderPreviousPlot() {
+    renderOutput.innerHTML = "";
+    plotly.newPlot("renderOutput", globalDataTrace, globalPlotlyLayout);
 }
 
 // this is for experimental update for the chart
@@ -258,16 +286,30 @@ function extendTrace() {
             console.log(res);
         });
     }, 1000);
-    
 }
 
 // periodically request xyz data from LCNC and then update plot
 function updatePlotlyChart() {
+    toggleDataStateSpan.classList.add("greenDisplay");
+    toggleDataStateSpan.classList.remove("redDisplay");
+    toggleDataStateSpan.innerText = "STREAM ON";
     setIntervalObject = setInterval(function () {
         httpRequestHandler(lcnc_status_url, null, "GET",
                            true, null,
                            null, true);
     }, 100);
+}
+
+function stopUpdatePlotlyChart() {
+    toggleDataStateSpan.classList.remove("greenDisplay");
+    toggleDataStateSpan.classList.add("redDisplay");
+    toggleDataStateSpan.innerText = "STREAM OFF";
+    clearInterval(setIntervalObject);
+}
+
+function renderThreeJSDOM() {
+    renderOutput.innerHTML = "";
+    renderOutput.appendChild(renderer.domElement);
     
 }
 
@@ -276,8 +318,7 @@ function updatePlotlyChart() {
 let stlLoader = new THREE.STLLoader();
 let clickCounter = 0;
 ddownList.addEventListener('click', function () {
-    renderOutput.innerHTML = "";
-    renderOutput.appendChild(renderer.domElement);
+    renderThreeJSDOM();
     clickCounter++;
     // using clickcounter to stop reload on first drop down roll
     // down
@@ -352,6 +393,7 @@ ddownList.addEventListener('click', function () {
             let submitElement = document.createElement('button');
             submitElement.type = "button";
             submitElement.innerText = "Update CAD";
+            submitElement.classList.add("submitButton");
             // attach an event listener to the submit button =
             // Update CAD
             submitElement.addEventListener('click', () => {
@@ -385,7 +427,9 @@ ddownList.addEventListener('click', function () {
             let spanElement2 = document.createElement('span');
             submitElement2.type = 'button';
             submitElement2.innerText = "POST ToolPath";
-            controlPanelForm.appendChild(spanElement2);
+            submitElement2.classList.add("submitButton");
+            
+            //controlPanelForm.appendChild(spanElement2);
             controlPanelForm.appendChild(submitElement2);
             submitElement2.addEventListener('click', () => {
                 console.log("sending req to lcnc");

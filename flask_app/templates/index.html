@@ -7,30 +7,50 @@
 
     <div id="selectTab">
         <p id="modelSelectionPanel">Model Selection Panel</p>
-        <select id="selectSTL">
-            <option value="0">--Please choose a STL model--</option>
-        </select>
-        <span>
-            <button type="button"
-                    id="refreshDoc">Refresh F360 Document
-            </button>
-        </span>
-        <span id="f360DocOpen"></span>
-        <span>
-            <button type="button"
-                    id="togglePlot">Toggle/Refresh Plot
-            </button>
-        </span>
-        <span>
-            <button type="button"
-                    id="toggleDataStream">Toggle Data Stream
-            </button>
-        </span>
-
-        <p>
-            <span> LCNC STATUS: </span>
-            <span id="lcncStatus"></span>
-        </p>
+        <table>
+            <tr>
+                <td>
+                    <select id="selectSTL">
+                        <option value="0">--Please choose a STL
+                                          model--
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button"
+                            id="refreshDoc">Refresh F360 Document
+                    </button>
+                </td>
+                <td>
+                    <button type="button"
+                            id="togglePlot">Toggle Plot
+                    </button>
+                </td>
+                <td>
+                    <button type="button"
+                            id="refreshPlot">Refresh Plot
+                    </button>
+                </td>
+                <td>
+                    <button type="button"
+                            id="toggleDataStream">Toggle Data Stream
+                    </button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span id="lcncStatus"></span>
+                </td>
+                <td>
+                    <span id="f360DocOpen"></span>
+                </td>
+                <td></td>
+                <td></td>
+                <td>
+                    <span id="toggleDataStateDisplay"></span>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <p></p>
