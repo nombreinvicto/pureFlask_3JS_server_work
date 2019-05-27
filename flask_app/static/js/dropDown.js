@@ -3,14 +3,13 @@ let THREE = require("./OrbitControls");
 let plotly = require("plotly.js");
 
 // set up all links for AJAX requests
-//let localhost = "http://192.168.0.10:6923";
 let localhost = "http://f360app.ngrok.io";
 const publicDirectoryUrl = localhost + "/public";
 const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
-let lcnc_status_url = "http://192.168.0.11:3296/lcn_xyz_status";
+let lcnc_status_url = "http://pocketncsim.ngrok.io/lcn_xyz_status";
 // let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
 
 //// 3.js initialisations
@@ -67,16 +66,19 @@ function httpRequestHandler(url,
                             buttonObject = [],
                             asyncPlotFlag = false) {
     let xmlHttp = new XMLHttpRequest();
+    
     function disableButtons() {
         buttonObject.forEach((button) => {
             button.disabled = true;
         });
     }
+    
     function enableButtons() {
         buttonObject.forEach((button) => {
             button.disabled = false;
         });
     }
+    
     if (asyncState) {
         // asyncState is only true when making request to post new
         // toolpath or when making calls to lcnc status
@@ -230,6 +232,7 @@ refreshPlotButton.addEventListener("click", () => {
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
         updatePlotlyChart();
+        //extendTrace();
     } else {
         stopUpdatePlotlyChart();
     }
@@ -275,8 +278,10 @@ function renderPreviousPlot() {
 
 // this is for experimental update for the chart
 function extendTrace() {
+    toggleDataStateSpan.classList.add("greenDisplay");
+    toggleDataStateSpan.classList.remove("redDisplay");
+    toggleDataStateSpan.innerText = "STREAM ON";
     setIntervalObject = setInterval(() => {
-        
         plotly.extendTraces("renderOutput", {
             x: [[Math.random() * 10]],
             y: [[Math.random() * 10]],
@@ -310,7 +315,6 @@ function stopUpdatePlotlyChart() {
 function renderThreeJSDOM() {
     renderOutput.innerHTML = "";
     renderOutput.appendChild(renderer.domElement);
-    
 }
 
 //////////////////////////////////////////////////////////////////////
