@@ -371,7 +371,7 @@ def go_stop_server():
     # only stop server on repress of addin button
     # dont execute when user turning off addin via dialog
     r = requests.post(url=localhost + "/shutdown")
-    ui.messageBox(str(r.text))
+    #ui.messageBox(str(r.text))
     # turn to false again ready for next repress of addin button
     app_run_tracker = not app_run_tracker
 
@@ -469,9 +469,8 @@ def stop(context):
         toolpathGenerateCustomEvent.remove(handlers[1])
         app.unregisterCustomEvent(toolpathGenerateCustomEventId)
 
-        ui.messageBox('FusionThreeJS Addin Stopped. \n' +
-                      'Addon reload can only occur with next Fusion restart.')
-
+        # ui.messageBox('FusionThreeJS Addin Stopped. \n' +
+        #               'Addon reload can only occur with next Fusion restart.')
         if app_run_tracker:  # is true when server is running
             # will stop server if it has not been already turned
             # off by the user
