@@ -9,8 +9,8 @@ const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
-let lcnc_status_url = "http://pocketncsim.ngrok.io/lcn_xyz_status";
-// let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
+//let lcnc_status_url = "http://pocketncsim.ngrok.io/lcn_xyz_status";
+let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
 
 //// 3.js initialisations
 // camera, scene init
@@ -23,7 +23,7 @@ camera.position.z = 1000;
 
 // renderer init
 renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth * (3 / 4),
+renderer.setSize(window.innerWidth * (0.7),
                  window.innerHeight * (3 / 4));
 let renderOutputElement = document.getElementById("renderOutput");
 renderOutputElement.appendChild(renderer.domElement);
@@ -36,6 +36,7 @@ controls.enableZoom = true;
 
 // set lighting directions
 let createLighting = function () {
+    
     let keyLight = new THREE.DirectionalLight(
         new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
     keyLight.position.set(-100, 0, 100);
@@ -49,6 +50,7 @@ let createLighting = function () {
     topLight.position.set(0, 1, 0);
     let bottomLight = new THREE.DirectionalLight(
         new THREE.Color('hsl(30, 100%,75%)'), 1.0);
+    
     bottomLight.position.set(0, -1, 0);
     scene.add(keyLight);
     scene.add(fillLight);
@@ -231,10 +233,11 @@ refreshPlotButton.addEventListener("click", () => {
 
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
+        // uncomment here to change from pocketnc to data stream simu
         updatePlotlyChart();
         //extendTrace();
     } else {
-        stopUpdatePlotlyChart();
+        stopUpdatePlotlyChart();v
     }
     dataStreamFlag = !dataStreamFlag;
 });
@@ -384,7 +387,7 @@ ddownList.addEventListener('click', function () {
                 parElem1.appendChild(labelForRangeControl);
                 parElem2.append(rangeControlElement, spanElement);
                 controlPanelForm.append(parElem1, parElem2);
-                
+                //
                 // connect rangeControlElement to onchange
                 // listeners for display change on the numeric
                 // outputs

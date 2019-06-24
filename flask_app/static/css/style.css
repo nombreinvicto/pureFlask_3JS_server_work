@@ -45,7 +45,7 @@ button:hover {
 #renderOutput {
     margin: auto;
     border: 5px solid lightseagreen;
-    width: 80%;
+    width: 76%;
 }
 
 
@@ -53,7 +53,7 @@ canvas {
     display: block;
     margin-left: auto;
     margin-right: auto;
-    width: 80%;
+    /*width: 70%;*/
 }
 
 
