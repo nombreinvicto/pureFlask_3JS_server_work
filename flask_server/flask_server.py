@@ -180,6 +180,7 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
             design = adsk.fusion.Design.cast(designProduct)
             unitsMgr = design.unitsManager
             defaultUnits = unitsMgr.defaultLengthUnits
+            allComponents = design.allComponents
             rootComp = design.rootComponent
             fileName = None
             outJsonMetaData = {}
@@ -194,32 +195,39 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                 flaskServerReplyBit = True
                 return
 
-            for key, val in eventArgs.items():
-                # Set the parameter value.
-                if key != 'filename':
-                    outJsonMetaData[key] = val
-                    newValue = float(val)
-                    param = design.rootComponent.modelParameters \
-                        .itemByName(key)
-                    if not param:
-                        flask_server_to_3js_reply = \
-                            "No model present in F360 \n" \
-                            "Parameter change attempt failed"
-                        flaskServerReplyBit = True
-                        return
-                    param.value = newValue * \
-                                  unit_to_cm_factors.get(defaultUnits)
-                    adsk.doEvents()
-                else:
-                    fileName = val
+            for comp in allComponents:
+                tcomp = comp  # type: adsk.fusion.Component
+                if tcomp.name == 'part':
+                    for key, val in eventArgs.items():
+                        # Set the parameter value.
+                        if key != 'filename':
+                            outJsonMetaData[key] = val
+                            newValue = float(val)
+                            # param = design.rootComponent.modelParameters \
+                            #     .itemByName(key)
+                            param = \
+                                tcomp.modelParameters.itemByName(key)
+                            if not param:
+                                flask_server_to_3js_reply = \
+                                    "No model present in F360 \n" \
+                                    "Parameter change attempt failed"
+                                flaskServerReplyBit = True
+                                return
+                            param.value = newValue * \
+                                          unit_to_cm_factors.get(
+                                              defaultUnits)
+                            adsk.doEvents()
+                        else:
+                            fileName = val
 
             # save filename for future g code export
+            tcomp = allComponents.itemByName('part')
             global_ngc_file_name_export = \
                 fileName[0:-4].replace(" ", "") + ".ngc"
             # Save the file as STL.
             exportMgr = adsk.fusion.ExportManager.cast(
                 design.exportManager)
-            stlOptions = exportMgr.createSTLExportOptions(rootComp)
+            stlOptions = exportMgr.createSTLExportOptions(tcomp)
             stlOptions.meshRefinement = adsk.fusion \
                 .MeshRefinementSettings.MeshRefinementMedium
             stlOptions.filename = cadMetaDataPath + r"\\" \
@@ -371,7 +379,7 @@ def go_stop_server():
     # only stop server on repress of addin button
     # dont execute when user turning off addin via dialog
     r = requests.post(url=localhost + "/shutdown")
-    #ui.messageBox(str(r.text))
+    # ui.messageBox(str(r.text))
     # turn to false again ready for next repress of addin button
     app_run_tracker = not app_run_tracker
 

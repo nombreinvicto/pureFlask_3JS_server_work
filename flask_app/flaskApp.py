@@ -54,3 +54,5 @@ def get_cad_meta_data(file_name):
         return json.dumps(j1)
     except Exception as msg:
         return json.dumps(str(msg))
+
+

@@ -237,7 +237,8 @@ toggleDataStreamButton.addEventListener("click", () => {
         updatePlotlyChart();
         //extendTrace();
     } else {
-        stopUpdatePlotlyChart();v
+        stopUpdatePlotlyChart();
+        v;
     }
     dataStreamFlag = !dataStreamFlag;
 });
@@ -354,8 +355,14 @@ ddownList.addEventListener('click', function () {
             let cadMetaData = httpRequestHandler(cadMetaDataUrl + ddownList.value, null, 'GET');
             const cadJsonMetaData = JSON.parse(cadMetaData);
             
+            // to show alphabetically ordered panels
+            let dimArray = [];
             for (let dim in cadJsonMetaData) {
-                
+                dimArray.push(dim);
+            }
+            dimArray.sort();
+            
+            for (let dim of dimArray) {
                 let labelForRangeControl = document.createElement('label');
                 let rangeControlElement = document.createElement('input');
                 let spanElement = document.createElement('span');
@@ -369,8 +376,13 @@ ddownList.addEventListener('click', function () {
                 rangeControlElement.max = cadJsonMetaData[dim]["max"];
                 rangeControlElement.name = dim;
                 rangeControlElement.id = dim;
-                rangeControlElement.step = "1";
-                rangeControlElement.setAttribute('value', cadJsonMetaData[dim]["currentValue"]);
+                //rangeControlElement.step = "1";
+                let steps = (parseFloat(rangeControlElement.max)
+                    - parseFloat(rangeControlElement.min)) / 100;
+                rangeControlElement.step =
+                    Math.round(steps * 100) / 100;
+                rangeControlElement.setAttribute('value',
+                                                 cadJsonMetaData[dim]["currentValue"]);
                 
                 labelForRangeControl.setAttribute('for', dim);
                 labelForRangeControl.innerText = dim;
@@ -393,7 +405,8 @@ ddownList.addEventListener('click', function () {
                 // outputs
                 rangeControlElement.addEventListener('change', () => {
                     // get the corresponding span element
-                    let spanElement = document.getElementById('spanFor' + dim);
+                    let spanElement =
+                        document.getElementById('spanFor' + dim);
                     spanElement.innerText = rangeControlElement.value;
                 });
             }
@@ -428,6 +441,7 @@ ddownList.addEventListener('click', function () {
                                    // ddwon list
             });
             controlPanelForm.appendChild(submitElement);
+            z7;
             
             // now add button for gcode export
             let submitElement2 = document.createElement('button');
@@ -459,3 +473,4 @@ let animate = function () {
     requestAnimationFrame(animate); // recursively calls itself
 };
 animate();
+
