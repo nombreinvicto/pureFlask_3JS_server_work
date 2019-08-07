@@ -368,8 +368,23 @@ ddownList.addEventListener('click', function () {
                 dimArray.push(dim);
             }
             dimArray.sort();
+            let dimArrayLength = dimArray.length;
+            let dimArrayIterator = dimArray.entries();
             
+            // change height of parent div acc to the number of
+            // elements coming in
+            let parentDivElement = document.getElementById('parent_div');
+            if (dimArrayLength > 2) {
+                let rowNum = Math.round(dimArrayLength / 2);
+                let totalHeight = 97 * rowNum + 150;
+                parentDivElement.style.height = totalHeight.toString() + 'px';
+            }else {
+                parentDivElement.style.height = '300px';
+            }
+            
+            // lets iterate over elements and populate control panel
             for (let dim of dimArray) {
+                let currentDimIndex = dimArrayIterator.next().value[0];
                 let labelForRangeControl = document.createElement('label');
                 let rangeControlElement = document.createElement('input');
                 let spanElement = document.createElement('span');
@@ -402,6 +417,11 @@ ddownList.addEventListener('click', function () {
                 // Panel
                 let parElem1 = document.createElement("p");
                 let parElem2 = document.createElement("p");
+                //let handInputElement =
+                // document.createElement('input');
+                // handInputElement.type = 'text';
+                // handInputElement.style.width = '40px';
+                
                 let tableCellElement = document.createElement('td');
                 
                 parElem1.appendChild(labelForRangeControl);
@@ -410,7 +430,14 @@ ddownList.addEventListener('click', function () {
                 tableCellElement.append(parElem1, parElem2);
                 cols.push(tableCellElement);
                 
-                if (cols.length === 2) {
+                if (cols.length === 1) {
+                    let spacerTd = document.createElement('td');
+                    spacerTd.style.width = '10px';
+                    cols.push(spacerTd);
+                }
+                
+                if (((currentDimIndex === dimArrayLength - 1) && (dimArrayLength % 2 !== 0)) ||
+                    cols.length === 3) {
                     tableRowElement = document.createElement('tr');
                     tableRowElement.append(...cols);
                     controlPanelForm.appendChild(tableRowElement);
