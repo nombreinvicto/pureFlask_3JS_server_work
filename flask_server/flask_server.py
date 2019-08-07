@@ -110,9 +110,10 @@ def send_gcode():
 
         # first rename the g code file to be exported
         src = os.path.join(global_output_folder,
-                           global_ngc_file_name + '.nc')
+                           global_ngc_file_name + '.ngc')
         dst = os.path.join(global_output_folder,
                            global_ngc_file_name_export)
+
         if global_ngc_file_name_export \
                 in os.listdir(global_output_folder):
             os.remove(dst)  # delete the already existing file
@@ -120,21 +121,20 @@ def send_gcode():
         os.rename(src, dst)
 
         # now open the renamed file and export it to LCNC
-        # with open(os.path.join(dst), 'r') as file:
-        #     files = {'file': file}
-        #     r = requests.post(lcnc_upload_url, files=files)
-        #     return r.text  # reply to be sent back to 3js
-        # edit for trial with pocketnc
-        with open(os.path.join(global_output_folder,
-                               'pocket.ngc'), 'r') as file:
+        with open(os.path.join(dst), 'r') as file:
             files = {'file': file}
             r = requests.post(lcnc_upload_url, files=files)
             return r.text  # reply to be sent back to 3js
 
-    except:
-        if ui:
-            ui.messageBox(
-                'Failed:\n{}'.format(traceback.format_exc()))
+        # edit for trial with pocketnc
+        # with open(os.path.join(global_output_folder,
+        #                        '1001.ngc'), 'r') as file:
+        #     files = {'file': file}
+        #     r = requests.post(lcnc_upload_url, files=files)
+        #     return r.text  # reply to be sent back to 3js
+
+    except Exception as msg:
+        return str(msg)
 
 
 @flask_app.route('/currentOpenDoc')
@@ -311,7 +311,7 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
             outputFolder = global_output_folder
 
             # specify a post configuration to use
-            postConfig = cam.genericPostFolder + '/' + 'fanuc.cps'
+            postConfig = cam.genericPostFolder + '/' + 'pocket nc.cps'
 
             # specify the NC file output units
             units = adsk.cam.PostOutputUnitOptions.DocumentUnitsOutput
@@ -326,7 +326,7 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
             designWs.activate()
 
             # wait for some time. probably saving file is async func
-            time.sleep(4)
+            time.sleep(5)
             send_gcode_to_lcnc_flag = True
 
 

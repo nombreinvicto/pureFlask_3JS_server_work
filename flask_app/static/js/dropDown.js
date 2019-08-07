@@ -104,7 +104,7 @@ function httpRequestHandler(url,
                     setTimeout(() => {
                         asyncResponseObject.innerText = "IDLE";
                         enableButtons();
-                    }, 5000);
+                    }, 2000);
                 } else if (xmlHttp.status === 500) {
                     asyncResponseObject.innerText = "Internal server" +
                         " error occured";
@@ -238,7 +238,6 @@ toggleDataStreamButton.addEventListener("click", () => {
         //extendTrace();
     } else {
         stopUpdatePlotlyChart();
-        v;
     }
     dataStreamFlag = !dataStreamFlag;
 });
@@ -441,7 +440,7 @@ ddownList.addEventListener('click', function () {
                                    // ddwon list
             });
             controlPanelForm.appendChild(submitElement);
-            z7;
+            
             
             // now add button for gcode export
             let submitElement2 = document.createElement('button');
