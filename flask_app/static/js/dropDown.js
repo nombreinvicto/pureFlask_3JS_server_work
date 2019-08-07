@@ -23,8 +23,8 @@ camera.position.z = 1000;
 
 // renderer init
 renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth * (0.7),
-                 window.innerHeight * (3 / 4));
+renderer.setSize(window.innerWidth * (0.6),
+                 window.innerHeight * (0.6));
 let renderOutputElement = document.getElementById("renderOutput");
 renderOutputElement.appendChild(renderer.domElement);
 
@@ -350,12 +350,20 @@ ddownList.addEventListener('click', function () {
             // first make sure the form element is empty
             controlPanelForm.innerHTML = "";
             
+            //lets create a table in the controlpanel
+            let controlPanelTable = document.createElement('table');
+            
+            controlPanelForm.appendChild(controlPanelTable);
+            
             // parse the stl json meta data to populate controls panel
             let cadMetaData = httpRequestHandler(cadMetaDataUrl + ddownList.value, null, 'GET');
             const cadJsonMetaData = JSON.parse(cadMetaData);
             
             // to show alphabetically ordered panels
             let dimArray = [];
+            let cols = [];
+            let tableRowElement = '';
+            
             for (let dim in cadJsonMetaData) {
                 dimArray.push(dim);
             }
@@ -394,10 +402,21 @@ ddownList.addEventListener('click', function () {
                 // Panel
                 let parElem1 = document.createElement("p");
                 let parElem2 = document.createElement("p");
+                let tableCellElement = document.createElement('td');
                 
                 parElem1.appendChild(labelForRangeControl);
                 parElem2.append(rangeControlElement, spanElement);
-                controlPanelForm.append(parElem1, parElem2);
+                //controlPanelForm.append(parElem1, parElem2);
+                tableCellElement.append(parElem1, parElem2);
+                cols.push(tableCellElement);
+                
+                if (cols.length === 2) {
+                    tableRowElement = document.createElement('tr');
+                    tableRowElement.append(...cols);
+                    controlPanelForm.appendChild(tableRowElement);
+                    cols = [];
+                }
+                
                 //
                 // connect rangeControlElement to onchange
                 // listeners for display change on the numeric
@@ -440,7 +459,6 @@ ddownList.addEventListener('click', function () {
                                    // ddwon list
             });
             controlPanelForm.appendChild(submitElement);
-            
             
             // now add button for gcode export
             let submitElement2 = document.createElement('button');
