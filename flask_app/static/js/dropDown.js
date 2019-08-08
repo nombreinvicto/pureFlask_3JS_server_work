@@ -38,18 +38,18 @@ controls.enableZoom = true;
 let createLighting = function () {
     
     let keyLight = new THREE.DirectionalLight(
-        new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
+        new THREE.Color('hsl(0,0%,100%)'), 1.0);
     keyLight.position.set(-100, 0, 100);
     let fillLight = new THREE.DirectionalLight(
-        new THREE.Color('hsl(240, 100%,75%)'), 0.75);
+        new THREE.Color('hsl(0,0%,100%)'), 0.75);
     fillLight.position.set(100, 0, 100);
     let backLight = new THREE.DirectionalLight(0xffffff, 1.0);
     backLight.position.set(100, 0, -100).normalize();
     let topLight = new THREE.DirectionalLight(
-        new THREE.Color('hsl(30, 100%,75%)'), 1.0);
+        new THREE.Color('hsl(0,0%,100%)'), 1.0);
     topLight.position.set(0, 1, 0);
     let bottomLight = new THREE.DirectionalLight(
-        new THREE.Color('hsl(30, 100%,75%)'), 1.0);
+        new THREE.Color('hsl(0,0%,100%)'), 1.0);
     
     bottomLight.position.set(0, -1, 0);
     scene.add(keyLight);
@@ -334,7 +334,7 @@ ddownList.addEventListener('click', function () {
         clickCounter = 0;
         stlLoader.load(localhost + "/get_stl_file/" + ddownList.value, function (geometry) {
             let mat = new THREE.MeshLambertMaterial({
-                                                        color: 0xf2d937
+                                                        color: 0xC0C0C0
                                                     });
             let mesh = new THREE.Mesh(geometry, mat);
             mesh.castShadow = true;
@@ -376,7 +376,7 @@ ddownList.addEventListener('click', function () {
             let parentDivElement = document.getElementById('parent_div');
             if (dimArrayLength > 2) {
                 let rowNum = Math.round(dimArrayLength / 2);
-                let totalHeight = 97 * rowNum + 150;
+                let totalHeight = 128 * rowNum + 150;
                 parentDivElement.style.height = totalHeight.toString() + 'px';
             }else {
                 parentDivElement.style.height = '300px';
