@@ -125,7 +125,6 @@ def send_gcode():
             files = {'file': file}
             r = requests.post(lcnc_upload_url, files=files)
             return r.text  # reply to be sent back to 3js
-
         # edit for trial with pocketnc
         # with open(os.path.join(global_output_folder,
         #                        '1001.ngc'), 'r') as file:
@@ -176,7 +175,7 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
             designProduct = products \
                 .itemByProductType('DesignProductType')
 
-            eventArgs = json.loads(args.additionalInfo)
+            eventArgs = json.loads(args.additionalInfo)  # type: dict
             design = adsk.fusion.Design.cast(designProduct)
             unitsMgr = design.unitsManager
             defaultUnits = unitsMgr.defaultLengthUnits
@@ -195,33 +194,66 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                 flaskServerReplyBit = True
                 return
 
-            for comp in allComponents:
-                tcomp = comp  # type: adsk.fusion.Component
-                if tcomp.name == 'part':
-                    for key, val in eventArgs.items():
-                        # Set the parameter value.
-                        if key != 'filename':
-                            outJsonMetaData[key] = val
-                            newValue = float(val)
-                            # param = design.rootComponent.modelParameters \
-                            #     .itemByName(key)
-                            param = \
-                                tcomp.modelParameters.itemByName(key)
-                            if not param:
-                                flask_server_to_3js_reply = \
-                                    "No model present in F360 \n" \
-                                    "Parameter change attempt failed"
-                                flaskServerReplyBit = True
-                                return
-                            param.value = newValue * \
-                                          unit_to_cm_factors.get(
-                                              defaultUnits)
-                            adsk.doEvents()
-                        else:
-                            fileName = val
-
-            # save filename for future g code export
             tcomp = allComponents.itemByName('part')
+            params = tcomp.modelParameters
+            # first we need to have the model parameter names
+            # arranged in the right sequence
+            sequenced_param_list = []
+            for param in params:
+                if param.comment != 'no':
+                    sequenced_param_list.append(str(param.name))
+
+            for key in sequenced_param_list:
+                newValue = float(eventArgs.get(key))
+                outJsonMetaData[key] = newValue
+                param = params.itemByName(key)
+                if not param:
+                    flask_server_to_3js_reply = \
+                        "No model present in F360 \n" \
+                        "Parameter change attempt failed"
+                    flaskServerReplyBit = True
+                    return
+                param.value = newValue * unit_to_cm_factors.get(
+                    defaultUnits)
+                adsk.doEvents() # guess this is async func
+                time.sleep(0.5)
+            fileName = eventArgs.get('filename')
+
+            # for comp in allComponents:
+            #     tcomp = comp  # type: adsk.fusion.Component
+            #     if tcomp.name == 'part':
+            #
+            #         # first we need to have the model parameter names
+            #         # arranged in the right sequence
+            #         sequenced_param_list = []
+            #         for param in tcomp.modelParameters:
+            #             sequenced_param_list.append(str(param.name))
+            #
+            #         for key, val in eventArgs.items():
+            #             # Set the parameter value.
+            #             if key != 'filename':
+            #                 outJsonMetaData[key] = val
+            #                 newValue = float(val)
+            #                 # param = design.rootComponent.modelParameters \
+            #                 #     .itemByName(key)
+            #                 param = \
+            #                     tcomp.modelParameters.itemByName(key)
+            #                 if not param:
+            #                     flask_server_to_3js_reply = \
+            #                         "No model present in F360 \n" \
+            #                         "Parameter change attempt failed"
+            #                     flaskServerReplyBit = True
+            #                     return
+            #                 param.value = newValue * \
+            #                               unit_to_cm_factors.get(
+            #                                   defaultUnits)
+            #                 adsk.doEvents()
+            #             else:
+            #                 fileName = val
+            # save filename for future g code export
+            #tcomp = allComponents.itemByName('part')
+
+
             global_ngc_file_name_export = \
                 fileName[0:-4].replace(" ", "") + ".ngc"
             # Save the file as STL.

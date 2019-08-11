@@ -4,8 +4,8 @@ import os, json, time
 
 
 cadMetaDataPath = os.path.dirname(__file__) + r'\stl'
-#lcnc_upload_url = "http://pocketncsim.ngrok.io/lcnc_upload"
-lcnc_upload_url = "http://152.1.58.35:3296/lcnc_upload"
+lcnc_upload_url = "http://pocketncsim.ngrok.io/lcnc_upload"
+#lcnc_upload_url = "http://152.1.58.35:3296/lcnc_upload"
 flask_app = Flask(__name__)
 CORS(flask_app)
 flask_app_PORT = 6923

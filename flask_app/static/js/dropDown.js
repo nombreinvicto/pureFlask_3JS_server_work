@@ -9,8 +9,8 @@ const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
-//let lcnc_status_url = "http://pocketncsim.ngrok.io/lcn_xyz_status";
-let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
+let lcnc_status_url = "http://pocketncsim.ngrok.io/lcn_xyz_status";
+//let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
 
 //// 3.js initialisations
 // camera, scene init
@@ -398,11 +398,7 @@ ddownList.addEventListener('click', function () {
                 rangeControlElement.max = cadJsonMetaData[dim]["max"];
                 rangeControlElement.name = dim;
                 rangeControlElement.id = dim;
-                //rangeControlElement.step = "1";
-                let steps = (parseFloat(rangeControlElement.max)
-                    - parseFloat(rangeControlElement.min)) / 100;
-                rangeControlElement.step =
-                    Math.round(steps * 100) / 100;
+                rangeControlElement.step = "0.05";
                 rangeControlElement.setAttribute('value',
                                                  cadJsonMetaData[dim]["currentValue"]);
                 
@@ -417,11 +413,6 @@ ddownList.addEventListener('click', function () {
                 // Panel
                 let parElem1 = document.createElement("p");
                 let parElem2 = document.createElement("p");
-                //let handInputElement =
-                // document.createElement('input');
-                // handInputElement.type = 'text';
-                // handInputElement.style.width = '40px';
-                
                 let tableCellElement = document.createElement('td');
                 
                 parElem1.appendChild(labelForRangeControl);
