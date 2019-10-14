@@ -36,7 +36,9 @@ if (window.ethereum) {
     
 } else {
     // set the provider you want from Web3.providers
-    console.log("Metamask not present. Aborting");
+    alert("Metamask Wallet not available. Page Load Aborted. Plesase" +
+              " install Metamask Plugin or use Brave Browser.");
+    return;
 }
 
 // set up all links for AJAX requests
