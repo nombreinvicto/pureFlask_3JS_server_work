@@ -25,10 +25,11 @@ if (window.ethereum) {
     
     // Request account access if needed
     ethereum.enable().then((res) => {
-        console.log("User granted access to Metamask");
+        alert("User granted access to Metamask");
     }).catch((err) => {
-        console.log("User denied access to account");
+        alert("User denied access to account");
         console.log(err);
+        return;
     });
     
     // creating a smart contract
@@ -36,7 +37,7 @@ if (window.ethereum) {
     
 } else {
     // set the provider you want from Web3.providers
-    alert("Metamask Wallet not available. Page Load Aborted. Plesase" +
+    alert("Metamask Wallet not available. Page Load Aborted. Please" +
               " install Metamask Plugin or use Brave Browser.");
     return;
 }
@@ -55,10 +56,10 @@ let lcnc_status_url = "http://pocketncsim.ngrok.io/lcn_xyz_status";
 // camera, scene init
 let scene, camera, renderer;
 scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1d4047);
+scene.background = new THREE.Color(0x5fa1b3);
 const aspectRatio = window.innerWidth / window.innerHeight;
 camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 1000);
-camera.position.z = 1000;
+camera.position.z = 500;
 
 // renderer init
 renderer = new THREE.WebGLRenderer();
@@ -89,13 +90,19 @@ let createLighting = function () {
     topLight.position.set(0, 1, 0);
     let bottomLight = new THREE.DirectionalLight(
         new THREE.Color('hsl(0,0%,100%)'), 1.0);
-    
+    //
     bottomLight.position.set(0, -1, 0);
     scene.add(keyLight);
     scene.add(fillLight);
     scene.add(backLight);
     scene.add(topLight);
     scene.add(bottomLight);
+    
+    // const color = 0xFFFFFF;
+    // const intensity = 1;
+    // const light = new THREE.AmbientLight(color, intensity);
+    // scene.add(light);
+    
 };
 
 // makes AJAX calls
@@ -127,7 +134,7 @@ function httpRequestHandler(url,
     // if async request is being made to plot lcnc
     if (plotGraphFlag) {
         // make calls to lcnc status
-        xmlHttp.timeout = 0.5 * 60 * 1000;
+        xmlHttp.timeout = 5 * 60 * 1000;
         xmlHttp.ontimeout = () => {
             // do nothing
             console.log("plot update from LCNC timed out");
@@ -168,7 +175,7 @@ function httpRequestHandler(url,
             setTimeout(() => {
                 responseObject.innerText = "IDLE";
                 enableButtons();
-            }, 2000);
+            }, 3000);
         };
         xmlHttp.onreadystatechange = function () {
             if (xmlHttp.readyState === XMLHttpRequest.DONE
@@ -179,14 +186,14 @@ function httpRequestHandler(url,
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 2000);
+                }, 3000);
             } else if (xmlHttp.status === 500) {
                 responseObject.innerText = "Internal server" +
                     " error occured";
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 2000);
+                }, 3000);
             }
         };
     }
@@ -202,7 +209,7 @@ function httpRequestHandler(url,
             setTimeout(() => {
                 responseObject.innerText = "IDLE";
                 enableButtons();
-            }, 2000);
+            }, 3000);
         };
         xmlHttp.onreadystatechange = function () {
             if (xmlHttp.readyState === XMLHttpRequest.DONE
@@ -215,14 +222,14 @@ function httpRequestHandler(url,
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 2000);
+                }, 3000);
             } else if (xmlHttp.status === 500) {
                 responseObject.innerText = "Internal server" +
                     " error occured";
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 2000);
+                }, 3000);
             }
         };
     }
@@ -246,6 +253,10 @@ panelNameElement.innerHTML = "<b>Control Panel</b>";
 let flaskServerResponsePanelName = document
     .getElementById("flaskServerResponsePanelName");
 flaskServerResponsePanelName.innerHTML = "<b>Status Panel</b>";
+//let ethereumResponsePanelName =
+// document.getElementById("ethereumResponsePanelName");
+//ethereumResponsePanelName.innerHTML = "<b>Blockchain Status Panel</b>";
+//let ethereumResponse = document.getElementById("ethereumResponse");
 
 // setting/getting up some of the initial HTML elements
 let controlPanelForm = document.getElementById('controlPanel');
@@ -446,11 +457,6 @@ ddownList.addEventListener('click', function () {
             // first make sure the form element is empty
             controlPanelForm.innerHTML = "";
             
-            //lets create a table in the controlpanel
-            let controlPanelTable = document.createElement('table');
-            
-            controlPanelForm.appendChild(controlPanelTable);
-            
             // parse the stl json meta data to populate controls panel
             let cadMetaData = httpRequestHandler(cadMetaDataUrl + ddownList.value,
                                                  null,
@@ -553,27 +559,27 @@ ddownList.addEventListener('click', function () {
             
             // we need to also send the buttons to disable
             var buttonArray = [];
-            var submitElement = document.createElement('button');
-            var submitElement2 = document.createElement('button');
+            var updateCADButton = document.createElement('button');
+            var postToolpathButton = document.createElement('button');
             
-            submitElement.type = "button";
-            submitElement.innerText = "Update CAD";
-            submitElement.classList.add("submitButton");
-            controlPanelForm.appendChild(submitElement);
+            updateCADButton.type = "button";
+            updateCADButton.innerText = "Update CAD";
+            updateCADButton.classList.add("submitButton");
+            controlPanelForm.appendChild(updateCADButton);
             
             // now add button for gcode export
-            submitElement2 = document.createElement('button');
+            postToolpathButton = document.createElement('button');
             let spanElement2 = document.createElement('span');
-            submitElement2.type = 'button';
-            submitElement2.innerText = "POST ToolPath";
-            submitElement2.classList.add("submitButton");
+            postToolpathButton.type = 'button';
+            postToolpathButton.innerText = "POST ToolPath";
+            postToolpathButton.classList.add("submitButton");
             //controlPanelForm.appendChild(spanElement2);
-            controlPanelForm.appendChild(submitElement2);
+            controlPanelForm.appendChild(postToolpathButton);
             
-            buttonArray.push(submitElement, submitElement2);
+            buttonArray.push(updateCADButton, postToolpathButton);
             
             // attach an event listener to the submit button = Update CAD
-            submitElement.addEventListener('click', () => {
+            updateCADButton.addEventListener('click', () => {
                 
                 let allInputs = document.querySelectorAll('input');
                 flaskServerResponsePanel.innerHTML = "";
@@ -594,21 +600,12 @@ ddownList.addEventListener('click', function () {
                                    true);
             });
             
-            submitElement2.addEventListener('click', () => {
+            postToolpathButton.addEventListener('click', () => {
                 console.log("sending req to lcnc");
                 // g code generation takes long time. so
                 // making this ajax call asynchronous
                 
-                // this is an async call
-                httpRequestHandler(fusionFlaskServerLCNCUrl,
-                                   null,
-                                   'GET',
-                                   flaskServerResponsePanel,
-                                   buttonArray,
-                                   false,
-                                   false,
-                                   true);
-                
+                // call smart contract function to intiate purchase order
                 sc_contract
                     .methods
                     .initiatePurchaseOrder("mahmud", "raleigh", 1, 2)
@@ -617,6 +614,17 @@ ddownList.addEventListener('click', function () {
                         console.log(receipt);
                         let po = receipt.events.CreateQuoteForCustomer.returnValues[0];
                         console.log(po);
+                        //ethereumResponse.innerText = po;
+                        
+                        // this is an async call to post the toolpath
+                        httpRequestHandler(fusionFlaskServerLCNCUrl,
+                                           null,
+                                           'GET',
+                                           flaskServerResponsePanel,
+                                           buttonArray,
+                                           false,
+                                           false,
+                                           true);
                     });
             });
         });

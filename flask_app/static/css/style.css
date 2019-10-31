@@ -68,11 +68,12 @@ canvas {
     color: darkblue;
     font-size: 25px;
     font-style: italic;
+    width: 60%;
 }
 
 #controlPanel {
     float: left;
-    width: 50%;
+    width: 60%;
     line-height: 40px;
     margin-right: 30px;
     margin-left: 20px;
@@ -87,6 +88,20 @@ canvas {
 
 
 #flaskServerResponse {
+    float: left;
+    margin-right: 5px;
+    color: green;
+    margin-top: 40px;
+    font-weight: bold;
+}
+
+#ethereumResponsePanelName {
+    color: darkblue;
+    font-size: 20px;
+    font-style: italic;
+}
+
+#ethereumResponse {
     float: left;
     margin-right: 5px;
     color: green;
@@ -116,6 +131,11 @@ table {
 td {
     align-content: center;
 }
+
+#leftTD {
+    width: 70%;
+}
+
 
 .submitButton {
     width: 150px;

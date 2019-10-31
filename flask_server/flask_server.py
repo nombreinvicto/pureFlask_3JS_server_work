@@ -213,46 +213,10 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                         "Parameter change attempt failed"
                     flaskServerReplyBit = True
                     return
-                param.value = newValue * unit_to_cm_factors.get(
-                    defaultUnits)
-                adsk.doEvents() # guess this is async func
-                time.sleep(0.5)
+                param.value = newValue * unit_to_cm_factors.get(defaultUnits)
+                #adsk.doEvents()  # guess this is async func
+                #time.sleep(1)
             fileName = eventArgs.get('filename')
-
-            # for comp in allComponents:
-            #     tcomp = comp  # type: adsk.fusion.Component
-            #     if tcomp.name == 'part':
-            #
-            #         # first we need to have the model parameter names
-            #         # arranged in the right sequence
-            #         sequenced_param_list = []
-            #         for param in tcomp.modelParameters:
-            #             sequenced_param_list.append(str(param.name))
-            #
-            #         for key, val in eventArgs.items():
-            #             # Set the parameter value.
-            #             if key != 'filename':
-            #                 outJsonMetaData[key] = val
-            #                 newValue = float(val)
-            #                 # param = design.rootComponent.modelParameters \
-            #                 #     .itemByName(key)
-            #                 param = \
-            #                     tcomp.modelParameters.itemByName(key)
-            #                 if not param:
-            #                     flask_server_to_3js_reply = \
-            #                         "No model present in F360 \n" \
-            #                         "Parameter change attempt failed"
-            #                     flaskServerReplyBit = True
-            #                     return
-            #                 param.value = newValue * \
-            #                               unit_to_cm_factors.get(
-            #                                   defaultUnits)
-            #                 adsk.doEvents()
-            #             else:
-            #                 fileName = val
-            # save filename for future g code export
-            #tcomp = allComponents.itemByName('part')
-
 
             global_ngc_file_name_export = \
                 fileName[0:-4].replace(" ", "") + ".ngc"
@@ -268,8 +232,7 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
 
             # dump new metadata
             with open(cadMetaDataPath + r"\\"
-                      + fileName[0:-4] + '_value' + '.json',
-                      'w') as outfile:
+                      + fileName[0:-4] + '_value' + '.json', 'w') as outfile:
                 json.dump(outJsonMetaData, outfile)
             # allow the flask server to reply now
             flask_server_to_3js_reply = "F360 Param Change Successful"
