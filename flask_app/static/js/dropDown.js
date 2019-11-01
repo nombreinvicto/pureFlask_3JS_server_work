@@ -134,7 +134,7 @@ function httpRequestHandler(url,
     // if async request is being made to plot lcnc
     if (plotGraphFlag) {
         // make calls to lcnc status
-        xmlHttp.timeout = 5 * 60 * 1000;
+        xmlHttp.timeout = 10 * 60 * 1000;
         xmlHttp.ontimeout = () => {
             // do nothing
             console.log("plot update from LCNC timed out");
@@ -175,7 +175,7 @@ function httpRequestHandler(url,
             setTimeout(() => {
                 responseObject.innerText = "IDLE";
                 enableButtons();
-            }, 3000);
+            }, 5000);
         };
         xmlHttp.onreadystatechange = function () {
             if (xmlHttp.readyState === XMLHttpRequest.DONE
@@ -186,14 +186,14 @@ function httpRequestHandler(url,
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 3000);
+                }, 5000);
             } else if (xmlHttp.status === 500) {
                 responseObject.innerText = "Internal server" +
                     " error occured";
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 3000);
+                }, 5000);
             }
         };
     }
@@ -209,7 +209,7 @@ function httpRequestHandler(url,
             setTimeout(() => {
                 responseObject.innerText = "IDLE";
                 enableButtons();
-            }, 3000);
+            }, 5000);
         };
         xmlHttp.onreadystatechange = function () {
             if (xmlHttp.readyState === XMLHttpRequest.DONE
@@ -222,14 +222,14 @@ function httpRequestHandler(url,
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 3000);
+                }, 5000);
             } else if (xmlHttp.status === 500) {
                 responseObject.innerText = "Internal server" +
                     " error occured";
                 setTimeout(() => {
                     responseObject.innerText = "IDLE";
                     enableButtons();
-                }, 3000);
+                }, 5000);
             }
         };
     }
@@ -338,8 +338,8 @@ refreshPlotButton.addEventListener("click", () => {
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
         // uncomment here to change from pocketnc to data stream simu
-        updatePlotlyChart();
-        //extendTrace();
+        //updatePlotlyChart();
+        extendTrace();
     } else {
         stopUpdatePlotlyChart();
     }
@@ -395,7 +395,7 @@ function extendTrace() {
             z: [[Math.random() * 10]]
         }, [0]).then((res) => {
             console.log("extended trace: ");
-            console.log(res);
+            //console.log(res);
         });
     }, 1000);
 }
@@ -486,7 +486,7 @@ ddownList.addEventListener('click', function () {
             let parentDivElement = document.getElementById('parent_div');
             if (dimArrayLength > 2) {
                 let rowNum = Math.round(dimArrayLength / 2);
-                let totalHeight = 128 * rowNum + 150;
+                let totalHeight = 150 * rowNum + 155;
                 parentDivElement.style.height = totalHeight.toString() + 'px';
             } else {
                 parentDivElement.style.height = '300px';
@@ -613,18 +613,35 @@ ddownList.addEventListener('click', function () {
                     .on("receipt", function (receipt) {
                         console.log(receipt);
                         let po = receipt.events.CreateQuoteForCustomer.returnValues[0];
-                        console.log(po);
-                        //ethereumResponse.innerText = po;
+                        let price = parseInt(receipt.events.CreateQuoteForCustomer.returnValues[1]);
+                        price = price * 10;
                         
-                        // this is an async call to post the toolpath
-                        httpRequestHandler(fusionFlaskServerLCNCUrl,
-                                           null,
-                                           'GET',
-                                           flaskServerResponsePanel,
-                                           buttonArray,
-                                           false,
-                                           false,
-                                           true);
+                        // hexify for smat contarct call
+                        let po_bn = web3.utils.toHex(po);
+                        let price_bn = web3.utils.toHex(price);
+                        
+                        // now call make order
+                        sc_contract
+                            .methods
+                            .makeOrder(po_bn)
+                            .send({
+                                      from: consumerAddress,
+                                      value: price_bn
+                                  }).on("receipt", (receipt) => {
+                            console.log(receipt);
+                            
+                            // this is an async call to post the toolpath
+                            httpRequestHandler(fusionFlaskServerLCNCUrl,
+                                               null,
+                                               'GET',
+                                               flaskServerResponsePanel,
+                                               buttonArray,
+                                               false,
+                                               false,
+                                               true);
+                            
+                        });
+                        
                     });
             });
         });

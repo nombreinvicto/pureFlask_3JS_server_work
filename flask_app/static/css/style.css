@@ -128,9 +128,9 @@ table {
     width: 100%;
 }
 
-td {
-    align-content: center;
-}
+/*td {*/
+/*    align-content: center;*/
+/*}*/
 
 #leftTD {
     width: 70%;
