@@ -2,13 +2,18 @@
 let THREE = require("./OrbitControls");
 let plotly = require("plotly.js");
 
-// blockchain related imports
-const Web3 = require("web3");
-const ABI = require("./abi");
-
 // supply chain member addresses
 let cncOwnerAddress = '0x7e18763C0dcBcFF6e9931aE2b5Ec3b06746A6EeB';
 let consumerAddress = '0x97698Ae226bE1573c5940dE64F50D12919826e54';
+
+// blockchain related imports
+const Web3 = require("web3");
+const ABI = require("./abi");
+const driver = require("bigchaindb-driver");
+const bdb_url = "https://test.ipdb.io/api/v1/";
+const conn = new driver.Connection(bdb_url);
+const bip39 = require("bip39");
+let consumerOnBigchain = new driver.Ed25519Keypair(bip39.mnemonicToSeed(consumerAddress).slice(0, 32));
 
 // getting supply chain adresses
 const sc_abi = ABI.sc_abi;
@@ -605,44 +610,99 @@ ddownList.addEventListener('click', function () {
                 // g code generation takes long time. so
                 // making this ajax call asynchronous
                 
-                // call smart contract function to intiate purchase order
-                sc_contract
-                    .methods
-                    .initiatePurchaseOrder("mahmud", "raleigh", 1, 2)
-                    .send({from: consumerAddress})
-                    .on("receipt", function (receipt) {
-                        console.log(receipt);
-                        let po = receipt.events.CreateQuoteForCustomer.returnValues[0];
-                        let price = parseInt(receipt.events.CreateQuoteForCustomer.returnValues[1]);
-                        price = price * 10;
-                        
-                        // hexify for smat contarct call
-                        let po_bn = web3.utils.toHex(po);
-                        let price_bn = web3.utils.toHex(price);
-                        
-                        // now call make order
-                        sc_contract
-                            .methods
-                            .makeOrder(po_bn)
-                            .send({
-                                      from: consumerAddress,
-                                      value: price_bn
-                                  }).on("receipt", (receipt) => {
+                try {
+                    // call smart contract function to intiate purchase order
+                    sc_contract
+                        .methods
+                        .initiatePurchaseOrder("mahmud", "raleigh", 1, 2)
+                        .send({from: consumerAddress})
+                        .on("receipt", function (receipt) {
                             console.log(receipt);
+                            let po = receipt.events.CreateQuoteForCustomer.returnValues[0];
+                            let price = parseInt(receipt.events.CreateQuoteForCustomer.returnValues[1]);
+                            price = price * 10;
                             
-                            // this is an async call to post the toolpath
-                            httpRequestHandler(fusionFlaskServerLCNCUrl,
-                                               null,
-                                               'GET',
-                                               flaskServerResponsePanel,
-                                               buttonArray,
-                                               false,
-                                               false,
-                                               true);
+                            // hexify for smat contarct call
+                            let po_bn = web3.utils.toHex(po);
+                            let price_bn = web3.utils.toHex(price);
+                            
+                            // now call make order
+                            sc_contract
+                                .methods
+                                .makeOrder(po_bn)
+                                .send({
+                                          from: consumerAddress,
+                                          value: price_bn
+                                      })
+                                .on("receipt", (receipt) => {
+                                    console.log(receipt);
+                                    
+                                    // this is an async call to post the
+                                    // toolpath
+                                    httpRequestHandler(fusionFlaskServerLCNCUrl,
+                                                       null,
+                                                       'GET',
+                                                       flaskServerResponsePanel,
+                                                       buttonArray,
+                                                       false,
+                                                       false,
+                                                       true);
+                                    
+                                    // also send transaction to BigchainDB
+                                    let asset = {};
+                                    
+                                    let partName = httpRequestHandler(
+                                        currentF360DocUrl,
+                                        null,
+                                        "GET",
+                                        null,
+                                        null,
+                                        false,
+                                        false,
+                                        false,
+                                        false);
+                                    
+                                    // set the asset name
+                                    asset["ethereum_client"] = consumerAddress;
+                                    asset['partName'] = partName;
+                                    asset['platform'] = "NCState DIME Labs CMaaS";
+                                    let metadata = {};
+                                    for (let dim in cadJsonMetaData) {
+                                        metadata[dim] = cadJsonMetaData[dim]["currentValue"];
+                                    }
+                                    asset['dimension_metadata'] = metadata;
+                                    asset["timestamp"] = new Date().getTime().toString().slice(0, -3);
+                                    const metadata_bdb = {
+                                        'platform': 'NCState DIME Labs CMaaS'
+                                    };
+                                    
+                                    // lets create the BDB TX
+                                    const txCreate = driver.Transaction.makeCreateTransaction(
+                                        asset,
+                                        metadata_bdb,
+                                        
+                                        // A transaction needs an output
+                                        [driver.Transaction.makeOutput(
+                                            driver.Transaction.makeEd25519Condition(consumerOnBigchain.publicKey))
+                                        ],
+                                        consumerOnBigchain.publicKey
+                                    );
+                                    
+                                    //lets sign the Tx
+                                    let txCreateSigned = driver.Transaction.signTransaction(txCreate, consumerOnBigchain.privateKey);
+                                    
+                                    // send the Tx
+                                    conn.postTransaction(txCreateSigned);
+                                    
+                                    console.log("BDB Transaction Sent");
+                                    
+                                });
                             
                         });
-                        
-                    });
+                } catch (e) {
+                    console.log(e);
+                }
+                
             });
         });
     }
