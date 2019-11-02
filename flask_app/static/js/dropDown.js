@@ -54,7 +54,8 @@ const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
-let lcnc_status_url = "http://pocketncsim.ngrok.io/lcn_xyz_status";
+let lcnc_status_url_default = "http://pocketncsim.ngrok.io/lcn_xyz_status";
+let lcnc_status_url = document.getElementById("machine_ip").value;
 //let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
 
 //// 3.js initialisations
@@ -343,8 +344,8 @@ refreshPlotButton.addEventListener("click", () => {
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
         // uncomment here to change from pocketnc to data stream simu
-        //updatePlotlyChart();
-        extendTrace();
+        updatePlotlyChart();
+        //extendTrace();
     } else {
         stopUpdatePlotlyChart();
     }
@@ -411,6 +412,10 @@ function updatePlotlyChart() {
     toggleDataStateSpan.classList.remove("redDisplay");
     toggleDataStateSpan.innerText = "STREAM ON";
     setIntervalObject = setInterval(function () {
+        lcnc_status_url = document.getElementById("machine_ip").value;
+        if (lcnc_status_url === "") {
+            lcnc_status_url = lcnc_status_url_default;
+        }
         httpRequestHandler(lcnc_status_url,
                            null,
                            "GET",
@@ -676,6 +681,16 @@ ddownList.addEventListener('click', function () {
                                         'platform': 'NCState DIME Labs CMaaS'
                                     };
                                     
+                                    // add a time stamp
+                                    let dateObject = {};
+                                    dateObject.day = new Date().getUTCDate();
+                                    dateObject.month = new Date().getUTCMonth() + 1;
+                                    dateObject.year = new Date().getUTCFullYear();
+                                    asset["dateObject"] = dateObject;
+                                    asset["description"] = "This is a" +
+                                        " sample part made by the DIME labs" +
+                                        " CMaaS platform";
+                                    
                                     // lets create the BDB TX
                                     const txCreate = driver.Transaction.makeCreateTransaction(
                                         asset,
@@ -693,7 +708,6 @@ ddownList.addEventListener('click', function () {
                                     
                                     // send the Tx
                                     conn.postTransaction(txCreateSigned);
-                                    
                                     console.log("BDB Transaction Sent");
                                     
                                 });

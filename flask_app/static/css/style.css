@@ -140,3 +140,7 @@ table {
 .submitButton {
     width: 150px;
 }
+
+#machine_ip {
+    width: 100%;
+}
