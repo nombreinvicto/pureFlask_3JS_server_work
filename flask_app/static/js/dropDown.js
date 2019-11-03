@@ -343,9 +343,17 @@ refreshPlotButton.addEventListener("click", () => {
 
 toggleDataStreamButton.addEventListener("click", () => {
     if (dataStreamFlag) {
-        // uncomment here to change from pocketnc to data stream simu
-        updatePlotlyChart();
-        //extendTrace();
+        
+        lcnc_status_url = document.getElementById("machine_ip").value;
+        if (lcnc_status_url !== "") {
+            //lcnc_status_url = lcnc_status_url_default;
+            // uncomment here to change from pocketnc to data stream simu
+            updatePlotlyChart();
+        } else {
+            
+            extendTrace();
+        }
+        
     } else {
         stopUpdatePlotlyChart();
     }
@@ -413,9 +421,6 @@ function updatePlotlyChart() {
     toggleDataStateSpan.innerText = "STREAM ON";
     setIntervalObject = setInterval(function () {
         lcnc_status_url = document.getElementById("machine_ip").value;
-        if (lcnc_status_url === "") {
-            lcnc_status_url = lcnc_status_url_default;
-        }
         httpRequestHandler(lcnc_status_url,
                            null,
                            "GET",
