@@ -82,7 +82,7 @@ canvas {
 
 #flaskServerResponsePanelName {
     color: darkblue;
-    font-size: 20px;
+    font-size: 25px;
     font-style: italic;
 }
 
@@ -91,7 +91,7 @@ canvas {
     float: left;
     margin-right: 5px;
     color: green;
-    margin-top: 40px;
+    margin-top: 10px;
     font-weight: bold;
 }
 
