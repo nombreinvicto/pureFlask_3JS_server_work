@@ -6,6 +6,7 @@ paramChangeCustomEventId = 'paramChangeEventId'
 toolpathGenerateCustomEventId = 'toolpathGenerateEventId'
 paramChangeCustomEvent = None
 toolpathGenerateCustomEvent = None
+invalid_toolpath_flag = None
 flaskServerReplyBit = False
 addInsPanel = None
 server_thread = None
@@ -93,7 +94,7 @@ def stop_server():
 
 @flask_app.route('/send_gcode_to_lcnc')
 def send_gcode():
-    global send_gcode_to_lcnc_flag
+    global send_gcode_to_lcnc_flag, invalid_toolpath_flag
     try:
         if app.activeDocument.name != \
                 global_fusion_open_document_name:
@@ -107,6 +108,12 @@ def send_gcode():
         while not send_gcode_to_lcnc_flag:
             pass
         send_gcode_to_lcnc_flag = False
+
+        # first check if invalid toolpath
+        if invalid_toolpath_flag:
+            invalid_toolpath_flag = None
+            return "Invalid toolpath generated for operations.\n" \
+                   "Please make sure geometry is valid."
 
         # first rename the g code file to be exported
         src = os.path.join(global_output_folder,
@@ -214,8 +221,8 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                     flaskServerReplyBit = True
                     return
                 param.value = newValue * unit_to_cm_factors.get(defaultUnits)
-                #adsk.doEvents()  # guess this is async func
-                #time.sleep(1)
+                # adsk.doEvents()  # guess this is async func
+                # time.sleep(1)
             fileName = eventArgs.get('filename')
 
             global_ngc_file_name_export = \
@@ -249,7 +256,7 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
         super().__init__()
 
     def notify(self, args: adsk.core.CustomEventArgs):
-        global send_gcode_to_lcnc_flag, flask_server_to_3js_reply
+        global send_gcode_to_lcnc_flag, flask_server_to_3js_reply, invalid_toolpath_flag
         try:
             # change the workspace to CAM ws
             designWs = ui.workspaces.itemById(
@@ -297,6 +304,14 @@ class RegenerateToolPathEventHandler(adsk.core.CustomEventHandler):
                 if n > 10:
                     n = 0
             progress.hide()
+
+            # now check if there are invalid toolpaths
+            for oper in cam.allOperations:
+                if not oper.isToolpathValid:
+                    invalid_toolpath_flag = True
+                    send_gcode_to_lcnc_flag = True
+                    designWs.activate()
+                    return
 
             # now post the NC files
             # specify the program name
