@@ -406,7 +406,7 @@ def attach_addin_button():
     # add a button command def
     flaskThreeJSButtDef = commDefs.addButtonDefinition(
         'flaskThreeJSButtDefID',
-        'Start 3JS Server!',
+        'Start CMaaS Server!',
         'starts a Flask server that serves a 3JS front end app '
         'controlling models in Fusion 360 in real time.',
         'resources'

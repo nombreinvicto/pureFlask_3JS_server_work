@@ -578,7 +578,7 @@ ddownList.addEventListener('click', function () {
             var postToolpathButton = document.createElement('button');
             
             updateCADButton.type = "button";
-            updateCADButton.innerText = "Update CAD";
+            updateCADButton.innerText = "Update Model";
             updateCADButton.classList.add("submitButton");
             controlPanelForm.appendChild(updateCADButton);
             
@@ -586,7 +586,7 @@ ddownList.addEventListener('click', function () {
             postToolpathButton = document.createElement('button');
             let spanElement2 = document.createElement('span');
             postToolpathButton.type = 'button';
-            postToolpathButton.innerText = "POST ToolPath";
+            postToolpathButton.innerText = "Send Make Order";
             postToolpathButton.classList.add("submitButton");
             //controlPanelForm.appendChild(spanElement2);
             controlPanelForm.appendChild(postToolpathButton);
