@@ -1,6 +1,7 @@
 //// importing the required libraries
 let THREE = require("./OrbitControls");
 let plotly = require("plotly.js");
+const axios = require("axios");
 
 // supply chain member addresses
 let cncOwnerAddress = '0x7e18763C0dcBcFF6e9931aE2b5Ec3b06746A6EeB';
@@ -111,147 +112,6 @@ let createLighting = function () {
     
 };
 
-// makes AJAX calls
-function httpRequestHandler(url,
-                            body,
-                            method,
-                            responseObject,
-                            buttonObject = [],
-                            updateCADflag = false,
-                            plotGraphFlag = false,
-                            postGcodeflag = false,
-                            makeAsync = true) {
-    
-    // object and functional initialisations
-    let xmlHttp = new XMLHttpRequest();
-    
-    function disableButtons() {
-        buttonObject.forEach((button) => {
-            button.disabled = true;
-        });
-    }
-    
-    function enableButtons() {
-        buttonObject.forEach((button) => {
-            button.disabled = false;
-        });
-    }
-    
-    // if async request is being made to plot lcnc
-    if (plotGraphFlag) {
-        // make calls to lcnc status
-        xmlHttp.timeout = 10 * 60 * 1000;
-        xmlHttp.ontimeout = () => {
-            // do nothing
-            console.log("plot update from LCNC timed out");
-        };
-        xmlHttp.onreadystatechange = function () {
-            if (xmlHttp.readyState === XMLHttpRequest.DONE
-                && xmlHttp.status === 200) {
-                let responseJSON = JSON.parse(xmlHttp.responseText);
-                console.log("Reply from LCNC for plotly: ");
-                console.log(responseJSON);
-                if (responseJSON["error"]) {
-                    lcncStatusSpan.innerText = responseJSON["error"];
-                    return;
-                } else {
-                    lcncStatusSpan.innerText = responseJSON["motion_status_name"];
-                }
-                if (parseInt(responseJSON["motion_status"]) !== 2) {
-                    plotly.extendTraces("renderOutput", {
-                        x: [[parseFloat(responseJSON["x"])]],
-                        y: [[parseFloat(responseJSON["y"])]],
-                        z: [[parseFloat(responseJSON["z"])]]
-                    }, [0]);
-                }
-            } else if (xmlHttp.status === 500) {
-                console.log("Internal server error for plotly");
-            }
-        };
-    }
-    
-    // if request to post gcode is coming
-    if (postGcodeflag) {
-        disableButtons();
-        responseObject.innerText = "Posting new toolpath...";
-        // then disable the buttons in the control panel
-        xmlHttp.timeout = 5 * 60 * 1000; // 5 min LCNC timeout
-        xmlHttp.ontimeout = function () {
-            responseObject.innerText = "LCNC Response Timed Out";
-            setTimeout(() => {
-                responseObject.innerText = "IDLE";
-                enableButtons();
-            }, 5000);
-        };
-        xmlHttp.onreadystatechange = function () {
-            if (xmlHttp.readyState === XMLHttpRequest.DONE
-                && xmlHttp.status === 200) {
-                console.log(xmlHttp.responseText);
-                console.log("response!!!");
-                responseObject.innerText = xmlHttp.responseText;
-                setTimeout(() => {
-                    responseObject.innerText = "IDLE";
-                    enableButtons();
-                }, 5000);
-            } else if (xmlHttp.status === 500) {
-                responseObject.innerText = "Internal server" +
-                    " error occured";
-                setTimeout(() => {
-                    responseObject.innerText = "IDLE";
-                    enableButtons();
-                }, 5000);
-            }
-        };
-    }
-    
-    // if request to update CAD
-    if (updateCADflag) {
-        disableButtons();
-        responseObject.innerText = "Updating CAD model in remote server...";
-        // then disable the buttons in the control panel
-        xmlHttp.timeout = 5 * 60 * 1000; // 5 min LCNC timeout
-        xmlHttp.ontimeout = function () {
-            responseObject.innerText = "CAD Server Response Timed Out";
-            setTimeout(() => {
-                responseObject.innerText = "IDLE";
-                enableButtons();
-            }, 5000);
-        };
-        xmlHttp.onreadystatechange = function () {
-            if (xmlHttp.readyState === XMLHttpRequest.DONE
-                && xmlHttp.status === 200) {
-                responseObject.innerText = xmlHttp.responseText;
-                // make the counter >1 so that stl reloads
-                clickCounter = 2;
-                // fire a click event on the ddwon list
-                ddownList.click();
-                setTimeout(() => {
-                    responseObject.innerText = "IDLE";
-                    enableButtons();
-                }, 5000);
-            } else if (xmlHttp.status === 500) {
-                responseObject.innerText = "Internal server" +
-                    " error occured";
-                setTimeout(() => {
-                    responseObject.innerText = "IDLE";
-                    enableButtons();
-                }, 5000);
-            }
-        };
-    }
-    
-    xmlHttp.open(method, url, makeAsync);
-    if (method === 'POST') {
-        xmlHttp.setRequestHeader("Content-Type",
-                                 "application/json;charset=UTF-8");
-    }
-    
-    // finally send the request
-    xmlHttp.send(JSON.stringify(body));
-    return xmlHttp.responseText; // in case of async request, this
-    // line doesnt return anything, probably an unhandled promise
-}
-
 // stl file drop down list initialisations
 var ddownList = document.getElementById('selectSTL');
 let panelNameElement = document.getElementById("panelName");
@@ -259,55 +119,40 @@ panelNameElement.innerHTML = "<b>Control Panel</b>";
 let flaskServerResponsePanelName = document
     .getElementById("flaskServerResponsePanelName");
 flaskServerResponsePanelName.innerHTML = "<b>Status Panel</b>";
-//let ethereumResponsePanelName =
-// document.getElementById("ethereumResponsePanelName");
-//ethereumResponsePanelName.innerHTML = "<b>Blockchain Status Panel</b>";
-//let ethereumResponse = document.getElementById("ethereumResponse");
 
 // setting/getting up some of the initial HTML elements
 let controlPanelForm = document.getElementById('controlPanel');
-let fileList = JSON.parse(httpRequestHandler(publicDirectoryUrl,
-                                             null,
-                                             'GET',
-                                             null,
-                                             null,
-                                             false,
-                                             false,
-                                             false,
-                                             false));
+
+let fileList = null;
+axios.get(publicDirectoryUrl).then((res) => {
+    fileList = res.data;
+    
+    // populate the drop down list
+    for (let file of fileList) {
+        // populate with only stl files
+        if (file.slice(file.length - 3, file.length) === 'stl') {
+            let option = document.createElement('option');
+            option.text = file;
+            ddownList.add(option);
+        }
+    }
+});
+
 let flaskServerResponsePanel = document
     .getElementById('flaskServerResponse');
 let currentF360DocPanel = document.getElementById('f360DocOpen');
 let refreshF360DocButton = document.getElementById('refreshDoc');
 refreshF360DocButton.addEventListener('click', () => {
-    currentF360DocPanel.innerText = httpRequestHandler(
-        currentF360DocUrl,
-        null,
-        "GET",
-        null,
-        null,
-        false,
-        false,
-        false,
-        false);
+    axios.get(currentF360DocUrl).then((res) => {
+        currentF360DocPanel.innerText = res.data.toString();
+    });
 });
 refreshF360DocButton.click();
-
-// populate the drop down list
-for (let _file of fileList) {
-    // populate with only stl files
-    if (_file.slice(_file.length - 3, _file.length) === 'stl') {
-        let option = document.createElement('option');
-        option.text = _file;
-        ddownList.add(option);
-    }
-}
 
 // all plotly tasks//////////////////////////////////////////////////
 // get all the buttons and elements
 let setIntervalObject = "";
 let renderOutput = document.getElementById("renderOutput");
-
 let togglePlotButton = document.getElementById("togglePlot");
 let togglePlotFlag = true;
 let firsPlotFlag = true;
@@ -419,15 +264,26 @@ function updatePlotlyChart() {
     toggleDataStateSpan.classList.add("greenDisplay");
     toggleDataStateSpan.classList.remove("redDisplay");
     toggleDataStateSpan.innerText = "STREAM ON";
+    lcnc_status_url = document.getElementById("machine_ip").value;
     setIntervalObject = setInterval(function () {
-        lcnc_status_url = document.getElementById("machine_ip").value;
-        httpRequestHandler(lcnc_status_url,
-                           null,
-                           "GET",
-                           null,
-                           null,
-                           false,
-                           true);
+        
+        axios.get(lcnc_status_url).then((res) => {
+            if (res.data["error"]) {
+                lcncStatusSpan.innerText = res.data["error"].toString();
+                return;
+            } else {
+                lcncStatusSpan.innerText = res.data["motion_status_name"];
+            }
+            
+            if (parseInt(res.data["motion_status_name"]) !== 2) {
+                plotly.extendTraces("renderOutput", {
+                    x: [[parseFloat(res.data["x"])]],
+                    y: [[parseFloat(res.data["y"])]],
+                    z: [[parseFloat(res.data["z"])]]
+                }, [0]);
+                
+            }
+        });
     }, 100);
 }
 
@@ -454,7 +310,7 @@ ddownList.addEventListener('click', function () {
     if (ddownList.value !== "0" && clickCounter > 1) {
         // option value defaults to option text if not specified
         clickCounter = 0;
-        stlLoader.load(localhost + "/get_stl_file/" + ddownList.value, function (geometry) {
+        stlLoader.load(localhost + "/get_stl_file/" + ddownList.value, async function (geometry) {
             let mat = new THREE.MeshLambertMaterial({
                                                         color: 0xC0C0C0
                                                     });
@@ -473,16 +329,7 @@ ddownList.addEventListener('click', function () {
             controlPanelForm.innerHTML = "";
             
             // parse the stl json meta data to populate controls panel
-            let cadMetaData = httpRequestHandler(cadMetaDataUrl + ddownList.value,
-                                                 null,
-                                                 'GET',
-                                                 null,
-                                                 null,
-                                                 false,
-                                                 false,
-                                                 false,
-                                                 false);
-            const cadJsonMetaData = JSON.parse(cadMetaData);
+            const cadJsonMetaData = (await axios.get(cadMetaDataUrl + ddownList.value)).data;
             
             // to show alphabetically ordered panels
             let dimArray = [];
@@ -497,7 +344,6 @@ ddownList.addEventListener('click', function () {
             let dimArrayIterator = dimArray.entries();
             
             // change height of parent div acc to the number ofelements coming
-            // in
             let parentDivElement = document.getElementById('parent_div');
             if (dimArrayLength > 2) {
                 let rowNum = Math.round(dimArrayLength / 2);
@@ -593,6 +439,19 @@ ddownList.addEventListener('click', function () {
             
             buttonArray.push(updateCADButton, postToolpathButton);
             
+            // object and functional initialisations
+            function disableButtons() {
+                buttonArray.forEach((button) => {
+                    button.disabled = true;
+                });
+            }
+            
+            function enableButtons() {
+                buttonArray.forEach((button) => {
+                    button.disabled = false;
+                });
+            }
+            
             // attach an event listener to the submit button = Update CAD
             updateCADButton.addEventListener('click', () => {
                 
@@ -607,16 +466,23 @@ ddownList.addEventListener('click', function () {
                 console.log("this is the POST req body before" +
                                 " param change");
                 console.log(flaskServerPostReqBody);
-                httpRequestHandler(fusionFlaskServerUrl,
-                                   flaskServerPostReqBody,
-                                   'POST',
-                                   flaskServerResponsePanel,
-                                   buttonArray,
-                                   true);
+                // disable buttons before sending request to do param change
+                disableButtons();
+                flaskServerResponsePanel.innerText = "Updating CAD model in remote server...";
+                axios.post(fusionFlaskServerUrl, flaskServerPostReqBody).then((res) => {
+                    flaskServerResponsePanel.innerText = res.data.toString();
+                    clickCounter = 2;
+                    ddownList.click();
+                    setTimeout(() => {
+                        flaskServerResponsePanel.innerText = "IDLE";
+                        enableButtons();
+                    }, 5000);
+                });
             });
             
             postToolpathButton.addEventListener('click', () => {
                 console.log("sending req to lcnc");
+                disableButtons();
                 // g code generation takes long time. so
                 // making this ajax call asynchronous
                 
@@ -632,7 +498,7 @@ ddownList.addEventListener('click', function () {
                             let price = parseInt(receipt.events.CreateQuoteForCustomer.returnValues[1]);
                             price = price * 10;
                             
-                            // hexify for smat contarct call
+                            // hexify for smart contarct call
                             let po_bn = web3.utils.toHex(po);
                             let price_bn = web3.utils.toHex(price);
                             
@@ -644,33 +510,23 @@ ddownList.addEventListener('click', function () {
                                           from: consumerAddress,
                                           value: price_bn
                                       })
-                                .on("receipt", (receipt) => {
+                                .on("receipt", async (receipt) => {
                                     console.log(receipt);
                                     
                                     // this is an async call to post the
                                     // toolpath
-                                    httpRequestHandler(fusionFlaskServerLCNCUrl,
-                                                       null,
-                                                       'GET',
-                                                       flaskServerResponsePanel,
-                                                       buttonArray,
-                                                       false,
-                                                       false,
-                                                       true);
+                                    flaskServerResponsePanel.innerText = "Posting new toolpath...";
+                                    axios.get(fusionFlaskServerLCNCUrl).then((res) => {
+                                        flaskServerResponsePanel.innerText = res.data.toString();
+                                        setTimeout(() => {
+                                            flaskServerResponsePanel.innerText = "IDLE";
+                                            enableButtons();
+                                        }, 5000);
+                                    });
                                     
                                     // also send transaction to BigchainDB
                                     let asset = {};
-                                    
-                                    let partName = httpRequestHandler(
-                                        currentF360DocUrl,
-                                        null,
-                                        "GET",
-                                        null,
-                                        null,
-                                        false,
-                                        false,
-                                        false,
-                                        false);
+                                    let partName = (await axios.get(currentF360DocUrl)).data;
                                     
                                     // set the asset name
                                     asset["ethereum_client"] = consumerAddress;
@@ -714,14 +570,11 @@ ddownList.addEventListener('click', function () {
                                     // send the Tx
                                     conn.postTransaction(txCreateSigned);
                                     console.log("BDB Transaction Sent");
-                                    
                                 });
-                            
                         });
                 } catch (e) {
                     console.log(e);
                 }
-                
             });
         });
     }
@@ -732,4 +585,3 @@ let animate = function () {
     requestAnimationFrame(animate); // recursively calls itself
 };
 animate();
-
