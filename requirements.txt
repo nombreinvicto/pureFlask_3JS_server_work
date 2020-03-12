@@ -1,4 +1,4 @@
 Flask_Cors==3.0.3
-psutil==5.4.3
+psutil==5.6.6
 Flask==0.12.2
 requests==2.18.4
