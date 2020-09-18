@@ -154,6 +154,9 @@ def getCurrentDoc():
                 'Failed:\n{}'.format(traceback.format_exc()))
 
 
+## add the function to open a model
+
+
 # event handler to handle parameter change command from 3JS
 class ParamChangeEventHandler(adsk.core.CustomEventHandler):
     def __init__(self):
@@ -369,10 +372,10 @@ class FlaskThreeJSButtonPressedHandler(
                 ngrok_thread.start()
 
                 app_run_tracker = not app_run_tracker
-                ui.messageBox('FusionThreeJS Server started at -> '
+                ui.messageBox('FusionThreeJS Server started at:: -> '
                               '\n' + localhost +
                               '\n' + masked_local_host)
-                webbrowser.open_new_tab(url=localhost)
+                webbrowser.open_new_tab(url=masked_local_host)
             else:
                 # stop the server on second press
                 go_stop_server()
@@ -433,7 +436,7 @@ def attach_addin_button():
 def start_ngrok_process():
     try:
         os.system(
-            'ngrok http --subdomain=f360app ' + str(flask_app_PORT))
+            'ngrok http -subdomain=f360app ' + str(flask_app_PORT))
     except:
         pass
 
