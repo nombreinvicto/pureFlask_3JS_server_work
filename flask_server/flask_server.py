@@ -96,7 +96,8 @@ def stop_server():
 def send_gcode():
     global send_gcode_to_lcnc_flag, invalid_toolpath_flag
     try:
-        if app.activeDocument.name != \
+        active_doc_name = app.activeDocument.name.split(" ")[0]
+        if active_doc_name != \
                 global_fusion_open_document_name:
             return 'F360 active document incompatible \n ' \
                    'with current STL file or no param \n ' \
@@ -146,7 +147,8 @@ def send_gcode():
 @flask_app.route('/currentOpenDoc')
 def getCurrentDoc():
     try:
-        return str(app.activeDocument.name)
+        docname = app.activeDocument.name.split(" ")[0]
+        return str(docname)
 
     except:
         if ui:
@@ -155,6 +157,7 @@ def getCurrentDoc():
 
 
 ## add the function to open a model
+
 
 
 # event handler to handle parameter change command from 3JS
@@ -197,7 +200,7 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
             # check if the file is the same as that one loaded in F360
             doc_name = eventArgs['filename'][0:-4]
             global_fusion_open_document_name = doc_name
-            if app.activeDocument.name != doc_name:
+            if app.activeDocument.name.split(" ")[0] != doc_name:
                 flask_server_to_3js_reply = \
                     'F360 active document ' \
                     'incompatible \n with current STL file'
