@@ -238,6 +238,11 @@ class LoadModelEventHandler(adsk.core.CustomEventHandler):
             supplied_filename = eventArgs['supplied_filename']
             path_to_f3d = eventArgs['path_to_f3d']
 
+            # first close the current active doc
+            doc = app.activeDocument
+            doc.close(False)
+
+            # init the target folder from where to retrieve the f3d
             data_folders = app.data.activeProject.rootFolder.dataFolders
             target_folder = data_folders.itemByName('OpenModel')
 
