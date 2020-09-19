@@ -6,8 +6,10 @@ handlers = []
 stopFlag = None
 paramChangeCustomEventId = 'paramChangeEventId'
 toolpathGenerateCustomEventId = 'toolpathGenerateEventId'
+loadModelCustomEventId = 'loadModelCustomEventId'
 paramChangeCustomEvent = None
 toolpathGenerateCustomEvent = None
+loadModelCustomEvent = None
 invalid_toolpath_flag = None
 flaskServerReplyBit = False
 addInsPanel = None
@@ -35,7 +37,7 @@ try:
         flaskKwargs, \
         flask_app_PORT, \
         lcnc_upload_url, \
-        part_types, cwd
+        part_types, cwd, cad_dir
     from flask import request, redirect, url_for, render_template
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     import threading, \
@@ -74,6 +76,8 @@ def shutdown_server_and_ngrok():
         if ngrok_process_name == procs.name():
             procs.kill()
 
+
+####################### ROUTES################################################
 
 @flask_app.route('/fusion360', methods=['POST'])
 def fusion360():
@@ -211,13 +215,52 @@ def parse_form_text():
 def open_cad_in_f360():
     # init all the variables according to context
     query_string_dict = request.args
-    supplied_part = query_string_dict.get('part')
-    supplied_filename = query_string_dict.get('id')
+    supplied_part = str(query_string_dict.get('part'))
+    supplied_filename = str(query_string_dict.get('id')).split(".")[0]
+    path_to_f3d = f"{cad_dir}\\{supplied_part}\\models\\{supplied_filename}.f3d"
 
-    print(supplied_part)
-    print(supplied_filename)
+    app.fireCustomEvent(loadModelCustomEventId,
+                        json.dumps({'supplied_filename': supplied_filename,
+                                    'path_to_f3d': path_to_f3d}))
 
-    return supplied_part
+    return redirect(url_for('get_home_page'))
+
+
+################### BELOW ARE EVENT HANDLER###################################
+class LoadModelEventHandler(adsk.core.CustomEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args: adsk.core.CustomEventArgs):
+        try:
+            # first delete any existing same name part in fusion
+            eventArgs = json.loads(args.additionalInfo)  # type: dict
+            supplied_filename = eventArgs['supplied_filename']
+            path_to_f3d = eventArgs['path_to_f3d']
+
+            data_folders = app.data.activeProject.rootFolder.dataFolders
+            target_folder = data_folders.itemByName('OpenModel')
+
+            # if file already exists delete it - successfull
+            for file in target_folder.dataFiles:
+                file = file  # type: adsk.core.DataFile
+                if file.name == supplied_filename:
+                    file.deleteMe()
+
+            # load model
+            f3dImportOptions = \
+                app.importManager.createFusionArchiveImportOptions(path_to_f3d)
+            newDoc = app.importManager.importToNewDocument(f3dImportOptions)
+
+            # if import done save it
+            newDoc.saveAs(f"{supplied_filename}",
+                          target_folder,
+                          "some_description",
+                          "some_tag")
+        except:
+            if ui:
+                ui.messageBox(
+                    'Failed:\n{}'.format(traceback.format_exc()))
 
 
 # event handler to handle parameter change command from 3JS
@@ -438,7 +481,8 @@ class FlaskThreeJSButtonPressedHandler(
                 ui.messageBox('FusionThreeJS Server started at:: -> '
                               '\n' + localhost +
                               '\n' + masked_local_host)
-                webbrowser.open_new_tab(url=masked_local_host)
+                webbrowser.open_new_tab(
+                    url=masked_local_host + f"/nlp_dashboard")
             else:
                 # stop the server on second press
                 go_stop_server()
@@ -508,13 +552,15 @@ def run(context):
     try:
         # Register the custom event and connect the handler
         global paramChangeCustomEvent, server_thread, \
-            toolpathGenerateCustomEvent
+            toolpathGenerateCustomEvent, loadModelCustomEvent
 
         paramChangeCustomEvent = app.registerCustomEvent(
             paramChangeCustomEventId)
 
         toolpathGenerateCustomEvent = app.registerCustomEvent(
             toolpathGenerateCustomEventId)
+
+        loadModelCustomEvent = app.registerCustomEvent(loadModelCustomEventId)
 
         onThreadEvent = ParamChangeEventHandler()
         paramChangeCustomEvent.add(onThreadEvent)
@@ -523,6 +569,10 @@ def run(context):
         onThreadEvent2 = RegenerateToolPathEventHandler()
         toolpathGenerateCustomEvent.add(onThreadEvent2)
         handlers.append(onThreadEvent2)
+
+        onThreadEvent3 = LoadModelEventHandler()
+        loadModelCustomEvent.add(onThreadEvent3)
+        handlers.append(onThreadEvent3)
 
         # add addin buttons to the toolbar
         attach_addin_button()
