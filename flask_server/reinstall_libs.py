@@ -11,7 +11,8 @@ lib_list = [
     'requests',
     'psutil',
     'numpy',
-    "pandas"
+    "pandas",
+    "tensorflow==2.0.0"
 ]
 
 install_dir = None

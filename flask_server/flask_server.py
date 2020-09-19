@@ -1,3 +1,5 @@
+# i am in addins
+
 app = None
 ui = None
 handlers = []
@@ -27,13 +29,14 @@ unit_to_cm_factors = {
 }
 
 try:
-    from pureFlask_3JS_Server.flask_app \
+    from PureFlask_3JS_server.flask_app \
         import flask_app, \
         cadMetaDataPath, \
         flaskKwargs, \
         flask_app_PORT, \
-        lcnc_upload_url
-    from flask import request
+        lcnc_upload_url, \
+        part_types, cwd
+    from flask import request, redirect, url_for, render_template
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     import threading, \
         json, \
@@ -42,10 +45,12 @@ try:
         os, \
         socket, \
         webbrowser, \
-        psutil
+        psutil, \
+        numpy
 
     app = adsk.core.Application.get()
     ui = app.userInterface
+
 except:
     if ui:
         ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
@@ -156,8 +161,63 @@ def getCurrentDoc():
                 'Failed:\n{}'.format(traceback.format_exc()))
 
 
-## add the function to open a model
+##############################################################################
+# Below routes are for the NLP search page
+@flask_app.route('/nlp_dashboard')
+def nlp_dashboard_view():
+    # init all the variables according to context
+    query_string_dict = request.args
+    supplied_part = query_string_dict.get('part')
+    default_title = "DIME Labs CAD Search NLP Engine"
+    image_src_tags = []
+    list_of_images = []
 
+    # see if this request has been made to query a part or not
+    if supplied_part:
+        # construct the path to the images
+        html_image_path = f"../static/cad_repo/{supplied_part}/images"
+        os_image_path = f"{cwd}/static/cad_repo/{supplied_part}/images"
+        list_of_images = os.listdir(os_image_path)
+
+        # now construct the list of relative src for html img tag
+        for image in list_of_images:
+            image_src_tags.append(f"{html_image_path}/{image}")
+
+    # construct the context_dict
+    context = {'title': default_title,
+               'part': supplied_part,
+               'image_src_tags': image_src_tags,
+               'image_list': list_of_images}
+
+    return render_template('nlp_dashboard.html', **context)
+
+
+@flask_app.route('/parse_text', methods=['GET', 'POST'])
+def parse_form_text():
+    supplied_text = request.form['text']
+
+    if supplied_text:
+        if supplied_text in part_types:
+            # if supplied text falls in part types, then render pictures
+            query_string = {'part': supplied_text}
+            return redirect(url_for("nlp_dashboard_view", **query_string))
+        else:
+            return "Part type doesnt exist"
+    else:
+        return "No Text Supplied"
+
+
+@flask_app.route('/open_cad')
+def open_cad_in_f360():
+    # init all the variables according to context
+    query_string_dict = request.args
+    supplied_part = query_string_dict.get('part')
+    supplied_filename = query_string_dict.get('id')
+
+    print(supplied_part)
+    print(supplied_filename)
+
+    return supplied_part
 
 
 # event handler to handle parameter change command from 3JS

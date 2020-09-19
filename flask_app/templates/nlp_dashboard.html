@@ -1,0 +1,52 @@
+{% extends "nlp_dashboard_layout.html" %}
+
+
+{% block body %}
+    <div class="card text-center">
+        <div class="card-header">
+            <h1>Find Your Parts!</h1>
+        </div>
+        <div class="card-body">
+            <form action="/parse_text" enctype="multipart/form-data"
+                  method="post">
+                <div class="form-group">
+                    <input type="text" name="text"
+                           class="btn btn-primary btn-lg active search_text">
+                    {#                    <input type="file" name="file"#}
+                    {#                           class="btn btn-primary btn-lg active">#}
+                    <input type="submit" value="Search!"
+                           class="btn btn-outline-success">
+                </div>
+            </form>
+        </div>
+        <br>
+        <div class="part_deck">
+            {% if image_src_tags %}
+
+                <div class="part_deck_cards">
+                    {% for image_name, src_tag in zip(image_list, image_src_tags) %}
+
+                        {#                        # this is how you send a request with query string#}
+                        <a href="{{ url_for('open_cad_in_f360', part=part,
+                                id=image_name) }}">
+                            <img src={{ src_tag }} alt=""
+                                 class="part_card">
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-muted">
+            <em><b>DIME Labs NLP-CAD Search Engine</b></em>
+        </div>
+    </div>
+{% endblock %}
+
+
+
+{% block js %}
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="../static/css/nlp_dashboard.css">
+{% endblock %}

@@ -1,17 +1,26 @@
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, \
+    render_template, \
+    send_from_directory
 from flask_cors import CORS
-import os, json, time
+import os, \
+    json, \
+    time
 
+# initialaisations
 
 cadMetaDataPath = os.path.dirname(__file__) + r'\stl'
 lcnc_upload_url = "http://pocketncsim.ngrok.io/lcnc_upload"
-#lcnc_upload_url = "http://152.1.58.35:3296/lcnc_upload"
 flask_app = Flask(__name__)
 CORS(flask_app)
 flask_app_PORT = 6923
-flask_app.jinja_env.globals['timestamp'] = int(time.time())
 flaskKwargs = {'debug': False, 'host': '0.0.0.0',
                'port': flask_app_PORT}
+
+# jina2 doesnt have these functions. this is the way
+# we make sure jina2 templating language what sth means
+flask_app.jinja_env.globals['timestamp'] = int(time.time())
+flask_app.jinja_env.globals['zip'] = zip
+flask_app.jinja_env.globals['enumerate'] = enumerate
 
 
 @flask_app.route('/')
@@ -54,5 +63,3 @@ def get_cad_meta_data(file_name):
         return json.dumps(j1)
     except Exception as msg:
         return json.dumps(str(msg))
-
-

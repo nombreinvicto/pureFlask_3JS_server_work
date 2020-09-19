@@ -1,2 +1,4 @@
 flask_app/stl
 flask_app/static/js/node_modules
+flask_app/static/cad_repo
+.idea
