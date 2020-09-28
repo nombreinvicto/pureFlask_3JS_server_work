@@ -37,7 +37,8 @@ try:
         flaskKwargs, \
         flask_app_PORT, \
         lcnc_upload_url, \
-        part_types, cwd, cad_dir
+        part_types, cwd, cad_dir, loaded_tokenizer, loaded_model, \
+        part_categories, pad_sequences, pad_max_length
     from flask import request, redirect, url_for, render_template
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     import threading, \
@@ -48,7 +49,7 @@ try:
         socket, \
         webbrowser, \
         psutil, \
-        numpy
+        numpy as np
 
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -198,15 +199,22 @@ def nlp_dashboard_view():
 
 @flask_app.route('/parse_text', methods=['GET', 'POST'])
 def parse_form_text():
-    supplied_text = request.form['text']
+    supplied_text = str(request.form['text'])
 
     if supplied_text:
-        if supplied_text in part_types:
-            # if supplied text falls in part types, then render pictures
-            query_string = {'part': supplied_text}
-            return redirect(url_for("nlp_dashboard_view", **query_string))
-        else:
-            return "Part type doesnt exist"
+        # if supplied text falls in part types, then render pictures
+        query_text_for_nlp = np.asarray([supplied_text])
+        text_sequence = loaded_tokenizer.texts_to_sequences(query_text_for_nlp)
+        padded_sequence = pad_sequences(text_sequence, maxlen=pad_max_length)
+
+        # make the keras model predition
+        nlp_pred = loaded_model.predict(padded_sequence)
+        index = np.argmax(nlp_pred)
+        queried_part = part_categories[int(index)]
+
+        query_string = {'part': queried_part}
+        return redirect(url_for("nlp_dashboard_view", **query_string))
+
     else:
         return "No Text Supplied"
 
