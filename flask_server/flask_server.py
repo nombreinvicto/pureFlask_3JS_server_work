@@ -37,7 +37,7 @@ try:
         flaskKwargs, \
         flask_app_PORT, \
         lcnc_upload_url, \
-        part_types, cwd, cad_dir, loaded_tokenizer, loaded_model, \
+        part_types, cwd, cad_dir, loaded_tokenizer, nlp_model, \
         part_categories, pad_sequences, pad_max_length
     from flask import request, redirect, url_for, render_template
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
@@ -208,7 +208,7 @@ def parse_form_text():
         padded_sequence = pad_sequences(text_sequence, maxlen=pad_max_length)
 
         # make the keras model predition
-        nlp_pred = loaded_model.predict(padded_sequence)
+        nlp_pred = nlp_model.predict(padded_sequence)
         index = np.argmax(nlp_pred)
         queried_part = part_categories[int(index)]
 

@@ -5,7 +5,7 @@ import pickle
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-pad_max_length = 4
+pad_max_length = 20
 part_categories = ['bearing', 'bolt', 'collet', 'spring', 'sprocket']
 
 # find the cad part types
@@ -16,8 +16,8 @@ cad_dir = f"{cwd}\\static\\cad_repo"
 part_types = str(os.listdir(cad_dir))
 
 # load the keras trained model
-with open(f'{save_path}//tokenizer.pickle', 'rb') as handle:
+with open(f'{save_path}//tokenizer_mcmaster.pickle', 'rb') as handle:
     loaded_tokenizer = pickle.load(handle)
 
 # load the keras model
-loaded_model = load_model(f"{save_path}//nlp_model.h5")
+nlp_model = load_model(f"{save_path}//nlp_model_mcmaster.h5")
