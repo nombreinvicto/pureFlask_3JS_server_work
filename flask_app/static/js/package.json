@@ -17,14 +17,14 @@
     "ify-loader": "^1.1.0",
     "transform-loader": "^0.2.4",
     "webpack": "^4.32.0",
-    "webpack-cli": "^3.3.2"
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "axios": "^0.19.0",
     "base-x": "^3.0.4",
     "bigchaindb-driver": "^4.1.0",
     "bip39": "^2.5.0",
-    "plotly.js": "^1.47.4",
+    "plotly.js": "^1.56.0",
     "web3": "^1.2.1"
   }
 }
