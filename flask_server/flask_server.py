@@ -49,7 +49,8 @@ try:
         socket, \
         webbrowser, \
         psutil, \
-        numpy as np
+        numpy as np, \
+        hashlib
 
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -164,6 +165,28 @@ def getCurrentDoc():
         if ui:
             ui.messageBox(
                 'Failed:\n{}'.format(traceback.format_exc()))
+
+
+@flask_app.route('/get_current_file_hash')
+def get_file_hash():
+    try:
+        docname = app.activeDocument.name.split(" ")[0]
+
+        # now start hashing the current STL of the active document
+        BLOCKSIZE = 65536
+        hasher = hashlib.md5()
+        stl_file_path = os.path.join(cadMetaDataPath, docname + '.stl')
+
+        with open(stl_file_path, 'rb') as afile:
+            buf = afile.read(BLOCKSIZE)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = afile.read(BLOCKSIZE)
+
+        return hasher.hexdigest()
+    except:
+        if ui:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
 ##############################################################################

@@ -12,7 +12,8 @@ lib_list = [
     'psutil',
     'numpy',
     "pandas",
-    "tensorflow==2.0.0"
+    "tensorflow==2.0.0",
+    "meshio"
 ]
 
 install_dir = None
