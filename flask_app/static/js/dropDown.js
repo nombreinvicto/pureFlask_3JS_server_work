@@ -166,8 +166,22 @@ let globalPlotlyLayout = "";
 
 let lcncStatusSpan = document.getElementById("lcncStatus");
 let toggleDataStateSpan = document.getElementById("toggleDataStateDisplay");
+let scanTestNetButton = document.getElementById("scan_testnet");
 
 // attach listeners to buttons
+
+//scan testnet
+scanTestNetButton.addEventListener('click', () => {
+    
+    let bdb_testnet_tag = document.getElementById("bdb_tag").value;
+    if (bdb_testnet_tag === "") {
+        alert('scan requires non-null tag');
+    } else {
+        
+        window.open(testBDBUrl + `{${bdb_testnet_tag}}`);
+    }
+});
+
 togglePlotButton.addEventListener("click", () => {
     if (togglePlotFlag && firsPlotFlag) {
         renderNewPlot();
@@ -574,12 +588,9 @@ ddownList.addEventListener('click', function () {
                                     
                                     // send the Tx
                                     conn.postTransaction(txCreateSigned);
-                                    console.log("BDB Transaction Sent");
-                                    
-                                    // automatically open the BDB testnet page
-                                    setTimeout(function () {
-                                        window.open(testBDBUrl + "{DIME}");
-                                    }, 20000);
+                                    let bdb_message = "BDB Transaction Sent";
+                                    console.log(bdb_message);
+                                    alert(bdb_message);
                                     
                                 });
                         });

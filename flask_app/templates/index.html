@@ -52,11 +52,18 @@
             </tr>
             <tr>
                 <td></td>
-                <td></td>
-                <td></td>
+                <td>
+                    <label for="bdb_tag">BigchainDB Testnet</label>
+                    <input type="text" id="bdb_tag">
+                </td>
+                <td>
+                    <button type="button"
+                            id="scan_testnet">Scan Testnet!
+                    </button>
+                </td>
                 <td></td>
                 <td>
-                    <label for="machine_ip">CNC IP:</label>
+                    <label for="machine_ip">CNC IP</label>
                     <input type="text" id="machine_ip">
                 </td>
             </tr>
@@ -84,7 +91,7 @@
                     <div id="controlPanel"></div>
                 </td>
                 <td id="flaskServerResponse">
-{#                    <div id="flaskServerResponse"></div>#}
+                    {#                    <div id="flaskServerResponse"></div>#}
                 </td>
             </tr>
         </table>
