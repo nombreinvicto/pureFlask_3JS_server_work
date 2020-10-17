@@ -1,6 +1,6 @@
 //// importing the required libraries
 let THREE = require("./OrbitControls");
-let plotly = require("plotly.js");
+let plotly = require("plotly.js/dist/plotly");
 const axios = require("axios");
 
 // supply chain member addresses
@@ -55,9 +55,11 @@ const cadMetaDataUrl = localhost + "/cadmeta/";
 let fusionFlaskServerUrl = localhost + "/fusion360";
 let fusionFlaskServerLCNCUrl = localhost + "/send_gcode_to_lcnc";
 let currentF360DocUrl = localhost + "/currentOpenDoc";
+let getF360DocHashUrl = localhost + "/get_current_file_hash";
 let lcnc_status_url_default = "http://pocketncsim.ngrok.io/lcn_xyz_status";
 let lcnc_status_url = document.getElementById("machine_ip").value;
 //let lcnc_status_url = "http://152.1.58.35:3296/lcn_xyz_status";
+let testBDBUrl = "https://test.ipdb.io/api/v1/assets/?search=";
 
 //// 3.js initialisations
 // camera, scene init
@@ -527,11 +529,14 @@ ddownList.addEventListener('click', function () {
                                     // also send transaction to BigchainDB
                                     let asset = {};
                                     let partName = (await axios.get(currentF360DocUrl)).data;
+                                    let partFileHash = (await axios.get(getF360DocHashUrl)).data;
                                     
                                     // set the asset name
                                     asset["ethereum_client"] = consumerAddress;
-                                    asset['partName'] = partName;
                                     asset['platform'] = "NCState DIME Labs CMaaS";
+                                    asset['partName'] = partName;
+                                    asset['part_STL_hash_md5'] = partFileHash;
+                                    
                                     let metadata = {};
                                     for (let dim in cadJsonMetaData) {
                                         metadata[dim] = cadJsonMetaData[dim]["currentValue"];
@@ -570,6 +575,12 @@ ddownList.addEventListener('click', function () {
                                     // send the Tx
                                     conn.postTransaction(txCreateSigned);
                                     console.log("BDB Transaction Sent");
+                                    
+                                    // automatically open the BDB testnet page
+                                    setTimeout(function () {
+                                        window.open(testBDBUrl + "{DIME}");
+                                    }, 20000);
+                                    
                                 });
                         });
                 } catch (e) {
