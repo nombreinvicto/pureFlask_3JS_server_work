@@ -13,7 +13,7 @@ lib_list = [
     'numpy',
     "pandas",
     "tensorflow==2.0.0",
-    "meshio"
+    "nltk==3.5.0"
 ]
 
 install_dir = None

@@ -1,5 +1,4 @@
 # i am in addins
-
 app = None
 ui = None
 handlers = []
@@ -50,7 +49,9 @@ try:
         webbrowser, \
         psutil, \
         numpy as np, \
-        hashlib
+        hashlib, \
+        nltk, \
+        string
 
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -190,6 +191,33 @@ def get_file_hash():
 
 
 ##############################################################################
+# stem and lemmatise preprocess the text
+stemmer = nltk.stem.PorterStemmer()
+stopwords_english = nltk.corpus.stopwords.words("english")
+
+
+def stem_preprocess(sent_: str):
+    # remove any leading space
+    sent_ = sent_.lstrip(" ").lower()
+    words_in_sent_ = sent_.split(" ")
+
+    # now remove stopwords and punctuation from sentence
+    words_to_allow_from_sent_ = []
+    for word in words_in_sent_:
+        if word not in stopwords_english and word not in string.punctuation:
+            words_to_allow_from_sent_.append(word)
+
+    # now stem the words
+    words_to_allow_from_sent_stemmed = []
+    for word in words_to_allow_from_sent_:
+        stem_word = stemmer.stem(word)
+        words_to_allow_from_sent_stemmed.append(stem_word)
+
+    # finally reconstruct the sentence
+    final_cleaned_sentence = " ".join(words_to_allow_from_sent_stemmed)
+    return final_cleaned_sentence
+
+
 # Below routes are for the NLP search page
 @flask_app.route('/nlp_dashboard')
 def nlp_dashboard_view():
@@ -226,11 +254,11 @@ def parse_form_text():
 
     if supplied_text:
         # if supplied text falls in part types, then render pictures
-        query_text_for_nlp = np.asarray([supplied_text])
+        query_text_for_nlp = np.asarray([stem_preprocess(supplied_text)])
         text_sequence = loaded_tokenizer.texts_to_sequences(query_text_for_nlp)
         padded_sequence = pad_sequences(text_sequence, maxlen=pad_max_length)
 
-        # make the keras model predition
+        # make the keras model prediction
         nlp_pred = nlp_model.predict(padded_sequence)
         index = np.argmax(nlp_pred)
         queried_part = part_categories[int(index)]
@@ -355,19 +383,30 @@ class ParamChangeEventHandler(adsk.core.CustomEventHandler):
                 if param.comment != 'no':
                     sequenced_param_list.append(str(param.name))
 
+            ## lets look at event args
+            with open("eventArgsFile.jso", mode="w") as argFile:
+                argFile.write(json.dumps(eventArgs))
+
             for key in sequenced_param_list:
-                newValue = float(eventArgs.get(key))
-                outJsonMetaData[key] = newValue
-                param = params.itemByName(key)
-                if not param:
-                    flask_server_to_3js_reply = \
-                        "No model present in F360 \n" \
-                        "Parameter change attempt failed"
-                    flaskServerReplyBit = True
-                    return
-                param.value = newValue * unit_to_cm_factors.get(defaultUnits)
-                # adsk.doEvents()  # guess this is async func
-                # time.sleep(1)
+                try:
+                    newValue = float(eventArgs.get(key))
+                    outJsonMetaData[key] = newValue
+                    param = params.itemByName(key)
+                    if not param:
+                        flask_server_to_3js_reply = \
+                            "No model present in F360 \n" \
+                            "Parameter change attempt failed"
+                        flaskServerReplyBit = True
+                        return
+
+                    # this is where we are setting the value
+                    param.value = newValue * unit_to_cm_factors.get(
+                        defaultUnits)
+                    # adsk.doEvents()  # guess this is async func
+                    # time.sleep(1)
+                except:
+                    pass
+
             fileName = eventArgs.get('filename')
 
             global_ngc_file_name_export = \
