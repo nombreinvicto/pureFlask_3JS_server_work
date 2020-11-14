@@ -31,6 +31,7 @@ unit_to_cm_factors = {
 
 try:
     import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
+
     app = adsk.core.Application.get()
     ui = app.userInterface
 
@@ -190,18 +191,24 @@ def get_file_hash():
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-##############################################################################
+########################### NLP ###########################################
 # stem and lemmatise preprocess the text
+# Below routes are for the NLP search page
 stemmer = nltk.stem.PorterStemmer()
 stopwords_english = nltk.corpus.stopwords.words("english")
 
 
 def stem_preprocess(sent_: str):
+    # remove punctuation
+    for punc in string.punctuation:
+        if punc in sent_:
+            sent_ = sent_.replace(punc, "")
+
     # remove any leading space
     sent_ = sent_.lstrip(" ").lower()
     words_in_sent_ = sent_.split(" ")
 
-    # now remove stopwords and punctuation from sentence
+    # now remove stopwords from sentence
     words_to_allow_from_sent_ = []
     for word in words_in_sent_:
         if word not in stopwords_english and word not in string.punctuation:
@@ -218,7 +225,6 @@ def stem_preprocess(sent_: str):
     return final_cleaned_sentence
 
 
-# Below routes are for the NLP search page
 @flask_app.route('/nlp_dashboard')
 def nlp_dashboard_view():
     # init all the variables according to context
@@ -251,6 +257,7 @@ def nlp_dashboard_view():
 @flask_app.route('/parse_text', methods=['GET', 'POST'])
 def parse_form_text():
     supplied_text = str(request.form['text'])
+    voice_endpoint_request_flag = request.form.get('voice', None)
 
     if supplied_text:
         # if supplied text falls in part types, then render pictures
@@ -264,6 +271,9 @@ def parse_form_text():
         queried_part = part_categories[int(index)]
 
         query_string = {'part': queried_part}
+
+        if voice_endpoint_request_flag:
+            return url_for("nlp_dashboard_view", **query_string)
         return redirect(url_for("nlp_dashboard_view", **query_string))
 
     else:
@@ -283,6 +293,52 @@ def open_cad_in_f360():
                                     'path_to_f3d': path_to_f3d}))
 
     return redirect(url_for('get_home_page'))
+
+
+################### VOICE ROUTES #############################################
+@flask_app.route("/twilio_reply", methods=["GET", "POST"])
+def reply_twilio():
+    if request.method == "GET":
+        # the first phone call has been configured to make a GET request
+        return render_template('xml/twilio_reply.xml')
+    else:
+        return render_template('xml/transcription_reply.xml')
+
+
+@flask_app.route("/handle_transcription", methods=['GET', 'POST'])
+def handle_transcription():
+    # this endpoint will always be made a POST request after transcription done
+    TranscriptionStatus = request.form.get('TranscriptionStatus')
+    TranscriptionText = request.form.get('TranscriptionText')
+
+    if not TranscriptionText:
+        TranscriptionText = "Transcription NONE!"
+
+    # this is for debugging
+    with open(r"C:\Users\mhasa\Desktop\before.txt", mode="w") as file:
+        file.write(TranscriptionText)
+
+    if TranscriptionStatus == "completed":
+        # now that there is a transcribed text
+        req_body = {
+            'text': TranscriptionText,
+            'voice': True
+        }
+
+        # make the POST request to parse text endpoint
+        try:
+            x = requests.post(masked_local_host + '/parse_text', data=req_body)
+            response_query_string = x.text
+
+            # then open the browser
+            webbrowser.open_new_tab(
+                url=masked_local_host + response_query_string)
+        except Exception as msg:
+            # this is also for debugging
+            with open(r"C:\Users\mhasa\Desktop\test.txt", mode="w") as file:
+                file.write(msg)
+
+    return "CMaaS"
 
 
 ################### BELOW ARE EVENT HANDLER###################################

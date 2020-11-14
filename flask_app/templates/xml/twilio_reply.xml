@@ -1,0 +1,9 @@
+<Response>
+    <Say voice="alice">This is DIME labs Cloud Manufacturing Platform. What
+        kind of part are you searching for?
+    </Say>
+    <Pause length="1"/>
+    <Record transcribe="true"
+            transcribeCallback="http://f360app.ngrok.io/handle_transcription"/>
+
+</Response>
