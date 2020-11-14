@@ -30,6 +30,10 @@ unit_to_cm_factors = {
 }
 
 try:
+    import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
+    app = adsk.core.Application.get()
+    ui = app.userInterface
+
     from PureFlask_3JS_server.flask_app \
         import flask_app, \
         cadMetaDataPath, \
@@ -39,7 +43,6 @@ try:
         part_types, cwd, cad_dir, loaded_tokenizer, nlp_model, \
         part_categories, pad_sequences, pad_max_length
     from flask import request, redirect, url_for, render_template
-    import adsk, adsk.core, adsk.fusion, adsk.cam, traceback
     import threading, \
         json, \
         requests, \
@@ -52,9 +55,6 @@ try:
         hashlib, \
         nltk, \
         string
-
-    app = adsk.core.Application.get()
-    ui = app.userInterface
 
 except:
     if ui:
