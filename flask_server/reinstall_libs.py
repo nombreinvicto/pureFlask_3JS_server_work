@@ -1,21 +1,26 @@
 import sys
 import os
 
-
 ## declare global variables
 
 install_base_dir = r"C:\Users\mhasa\AppData\Local\Autodesk\webdeploy\production"
+reqtxt = r"C:\Users\mhasa\AppData\Roaming\Autodesk\Autodesk Fusion 360\MyScripts\PureFlask_3JS_server\req_text_file.txt"
+
+with open(file=reqtxt, mode="r") as file:
+    lines = file.readlines()
+    lib_list = [l.replace("\n", "") for l in lines]
+
 interpreter_dirs = os.listdir(install_base_dir)
-lib_list = [
-    'flask',
-    'flask_cors',
-    'requests',
-    'psutil',
-    'numpy',
-    "pandas",
-    "tensorflow==2.0.0",
-    "nltk==3.5.0"
-]
+# lib_list = [
+#     'flask',
+#     'flask_cors',
+#     'requests',
+#     'psutil',
+#     'numpy',
+#     "pandas",
+#     "tensorflow==2.0.0",
+#     "nltk==3.5.0"
+# ]
 
 install_dir = None
 

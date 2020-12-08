@@ -16,8 +16,8 @@ cad_dir = f"{cwd}\\static\\cad_repo"
 part_types = str(os.listdir(cad_dir))
 
 # load the keras trained model
-with open(f'{save_path}//tokenizer_mcmaster_stemmed.pickle', 'rb') as handle:
+with open(f'{save_path}//tokenizer_mcmaster_stemmed1.pickle', 'rb') as handle:
     loaded_tokenizer = pickle.load(handle)
 
 # load the keras model
-nlp_model = load_model(f"{save_path}//nlp_model_mcmaster_stemmed.h5")
+nlp_model = load_model(f"{save_path}//nlp_model_mcmaster_stemmed_simpler1.h5")
